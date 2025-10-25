@@ -1,8 +1,8 @@
-"""üretim tarihi güncellendi
+"""yeni yükleme
 
-Revision ID: df267db7393d
+Revision ID: fadd13151240
 Revises: 
-Create Date: 2025-10-25 00:01:30.989203
+Create Date: 2025-10-25 17:59:30.331861
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'df267db7393d'
+revision = 'fadd13151240'
 down_revision = None
 branch_labels = None
 depends_on = None

@@ -27,19 +27,22 @@ input, select { width: 100%; padding: .5rem; border: 1px solid #ced4da; border-r
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container">
     <h1>Makine Bilgilerini Düzelt</h1>
     <h2>( {{ ekipman.kod }}-{{ ekipman.marka }})</h2>
     <hr>
     
     <form action="" method="POST" novalidate>
         {{ form.hidden_tag() }}
-        <p>
-            {{ form.kod.label }}<br>
-            {{ form.kod(size=32) }}
-        </p>
+       
+       <div class="form-group">
+            <label for="kod">Makine Kodu :</label>
+            <input type="text" id="kod" name="kod" value="{{ ekipman.kod }}" required>
+        </div>
+       
         <div class="form-group">
              <label for="Yakit">Yakıt</label>
-             <input list="yakit-listesi"  id="yakit"   name="yakit" required>
+             <input list="yakit-listesi"  id="yakit"   name="yakit" value="{{ ekipman.yakit }}" required>
             <datalist id="yakit-listesi">
                 <option value="Elektrikli">
                 <option value="Dizel">
@@ -48,7 +51,7 @@ input, select { width: 100%; padding: .5rem; border: 1px solid #ced4da; border-r
         </div>  
         <div class="form-group">
              <label for="tipi">Tipi</label>
-             <input list="tip-listesi"  id="tipi"   name="tipi" required>
+             <input list="tip-listesi"  id="tipi"   name="tipi" value="{{ ekipman.tipi }}" required>
             <datalist id="tip-listesi">
                 <option value="Manlift">
                 <option value="Eklemli">
@@ -56,11 +59,9 @@ input, select { width: 100%; padding: .5rem; border: 1px solid #ced4da; border-r
                 <option value="Forklift">   
             </datalist> 
         </div>
-
-
         <div class="form-group">
              <label for="marka">Markası</label>
-             <input list="marka-listesi" id="marka" name="marka" required>
+             <input list="marka-listesi" id="marka" name="marka" value="{{ ekipman.marka }}" required>
 
             <datalist id="marka-listesi">
                 <option value="Dingli">
@@ -79,34 +80,69 @@ input, select { width: 100%; padding: .5rem; border: 1px solid #ced4da; border-r
                 <option value="Komatsu">
             </datalist> 
         </div>
-        <p>
-            {{ form.marka.label }}<br>
-            {{ form.marka(size=32) }}
-        </p>
-        
-        <p>
-            {{ form.seri_no.label }}<br>
-            {{ form.seri_no(size=32) }}
-        </p>
-         <p>
-            {{ form.calisma_yuksekligi.label }}<br>
-            {{ form.calisma_yuksekligi(size=32) }}
-        </p>
-        <p>
-            {{ form.kaldirma_kapasitesi.label }}<br>
-            {{ form.kaldirma_kapasitesi(size=32) }} 
-        </p>
-        
-         <div class="form-group">
+       <div class="form-group">
+            <label for="seri_no">Seri No :</label>   
+            <input type="text" id="seri_no" name="seri_no" value="{{ ekipman.seri_no}}" required>
+        </div>
+        <div class="form-group">
+            <label for="calisma_yuksekligi">Çalışma Yüksekliği (m):</label>
+            <input type="number" step="0.1" id="calisma_yuksekligi" name="calisma_yuksekligi" value="{{ ekipman.calisma_yuksekligi }}" required>     
+        </div>
+        <div class="form-group">
+            <label for="kaldirma_kapasitesi">Kaldırma Kapasitesi (kg):</label>
+            <input type="number" id="kaldirma_kapasitesi" name="kaldirma_kapasitesi" value="{{ ekipman.kaldirma_kapasitesi}}" required>
+        </div>
+       
+
+        <div class="form-group">
             <label for="uretim_tarihi">Üretim Tarihi:</label>
-            <input type="date" id="uretim_tarihi" name="uretim_tarihi" required>
+            <input type="date" id="uretim_tarihi" name="uretim_tarihi" value="{{ ekipman.uretim_tarihi}}"required>
         </div>
 
-        <p>
-            {{ form.submit(value='Güncelle') }} </p>
+        <!-- Butonlar -->
+        <div class="butonlar">
+         <button type="submit" class="buton">Kaydet 
+            </button>
+         <a href="{{ url_for('filo.index') }}" class="buton iptal">İptal</a>
+         </div>
+    </form>
+       <style>
+        .butonlar {
+        display: flex;
+        justify-content: flex-start; /* sola hizala */
+        gap: 40px; /* butonlar arası boşluk */
+        margin-top: 30px;
+        }
+
+            .buton {
+                display: inline-block;
+             padding: 10px 10px;
+                background-color: #007BFF;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                font-weight: bold;
+                border: none;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+              }
+
+        .buton:hover {
+             background-color: #0056b3;
+            }
+
+         .buton.iptal {
+            background-color: #6c757d; /* gri */
+            }
+
+         .buton.iptal:hover {
+             background-color: #5a6268;
+            }
+</style>
     </form>
     
-    <hr>
-    <a href="{{ url_for('filo.index') }}">Geri Dön</a>
+   
+    
 </style>
+</div>
 {% endblock %}
