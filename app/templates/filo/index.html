@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Makine Parkı</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
+.container { max-width: 1500px; margin: auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+h1 { color: #343a40; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
+th, td { padding: 12px; border: 1px solid #dee2e6; text-align: left; vertical-align: middle;}
+th { background-color: #e9ecef; }
+.status { padding: 5px 10px; color: white; border-radius: 15px; text-align: center; font-weight: bold; font-size: 0.8em; }
+.status-bos { background-color: #28a745; text-align: center; font-size: 0.8em; }
+.status-kirada { background-color: #007bff; text-align: center; font-size: 0.8em; }
+a { color: #007bff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.btn { padding: 8px 12px; border-radius: 5px; text-decoration: none; font-weight: bold; color: white; transition: background-color 0.2s; }
+.btn-success { background-color: #28a745; }
+.btn-success:hover { background-color: #218838; color: white; }
+.btn-danger { background-color: #c82333; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+.alert { padding: 1rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; }
+.alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+.alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+.alert-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
+.footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+    <h1>Makine Parkı (Filo)</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class=flashes>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <p>
+        <a href="{{ url_for('filo.ekle') }}">Yeni Makine Ekle</a>
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Makine Kodu</th>
+                <th>Yakıt Türü</th>
+                <th>Makine Tipi</th>
+                <th>Makine Markası</th>
+                <th>Çalışma Yüksekliği</th>
+                <th>Kaldırma Kapasitesi</th>
+                <th>Üretim Tarihi</th>
+                <th>Kiraya Ver</th>
+                <th>İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ekipman in ekipmanlar %}
+            <tr>
+                <td>{{ ekipman.kod }}</td>
+                <td>{{ ekipman.yakit }}</td>
+                <td>{{ ekipman.tipi }}</td>
+                <td>{{ ekipman.marka }}</td>
+                <td>{{ ekipman.calisma_yuksekligi }}</td>
+                <td>{{ ekipman.kaldirma_kapasitesi }}</td>
+                <td>{{ ekipman.uretim_tarihi.strftime('%Y') }}</td>
+                
+                <td>
+                    {% if not ekipman.calisma_durumu %}
+                    <a class="btn btn-success" href="{{ url_for('kiralama.ekle') }}">Kiraya Ver</a>
+                    {% else %}  
+                    <span class="status status-kirada">Kirada</span>
+                    {% endif %} 
+                </td>
+
+                <td>
+                    <a href="{{ url_for('filo.duzelt', id=ekipman.id) }}">Düzelt</a>
+                    &nbsp; | &nbsp; 
+                    <form action="{{ url_for('filo.sil', id=ekipman.id) }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="submit" class="btn-danger" value="Sil" onclick="return confirm('Bu makineyi silmek istediğinizden emin misiniz?')">
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7">Kayıtlı makine bulunamadı.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+</body>
+</html>

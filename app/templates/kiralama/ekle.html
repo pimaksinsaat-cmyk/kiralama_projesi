@@ -1,0 +1,87 @@
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pimaks Ana Ekran</title>
+
+<style>
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+    margin: 40px; 
+    background-color: #f8f9fa; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    min-height: 80vh; 
+}
+.container { 
+    max-width: 600px; 
+    width: 100%; 
+    padding: 30px; 
+    background-color: #fff; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+}
+.logo { 
+    max-width: 220px; 
+    margin-bottom: 25px; 
+    display: block; 
+    margin-left: auto; 
+    margin-right: auto; 
+}
+h1 { 
+    color: #343a40; 
+    text-align: center; 
+    margin-bottom: 30px; 
+    font-size: 1.8rem; 
+}
+p { 
+    color: #6c757d; 
+    text-align: center; 
+    margin-bottom: 10px; 
+    font-size: 1rem; 
+}
+nav a { 
+    display: block; 
+    background-color: #ffffff; 
+    padding: 18px 25px; 
+    margin-bottom: 12px; 
+    text-decoration: none; 
+    color: #495057; 
+    border-radius: 5px; 
+    border: 1px solid #dee2e6; 
+    transition: all 0.2s ease-in-out; 
+    text-align: center; 
+    font-size: 1.1rem; 
+    font-weight: 500; 
+}
+nav a:hover { 
+    background-color: #007bff; 
+    color: white; 
+    border-color: #007bff; 
+    transform: translateY(-2px); 
+    box-shadow: 0 2px 5px rgba(0,123,255,0.2); 
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <img class="logo" src="https://i.imgur.com/Jz2e5dE.png" alt="Pimaks Logosu">
+    <h1>PİMAKS KİRALAMA</h1>
+
+    <!-- DÜZELTME: Logo linki doğru resim adresine çevrildi. -->
+<p>
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+            {{ form.kod.label }}<br>
+            {{ form.kod(size=32) }}
+        </p>
+        </form>
+    <nav>   
+        <a href="{{ url_for('filo.index') }}">Kirala</a>
+        <p>Kiralama Sayfası.</p>
+    </nav>
+</div>
+</body>
+</html>

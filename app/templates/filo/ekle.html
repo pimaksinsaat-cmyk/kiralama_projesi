@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Yeni Makine Kayıt</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
+.container { max-width: 550px; margin: auto; padding: 25px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+h1 { color: #343a40; text-align: center; margin-bottom: 20px;}
+.form-group { margin-bottom: 0.7rem; }
+label { display: block; margin-bottom: .4rem; font-weight: 500; color: #495057; }
+input, select { width: 100%; padding: .5rem; border: 1px solid #ced4da; border-radius: .25rem; box-sizing: border-box; font-size: 1rem; }
+.form-info { background-color: #e9ecef; padding: 10px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9rem; text-align: center;}
+.btn-container { margin-top: 20px; }
+.btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1.1rem;}
+.btn-primary { background-color: #007bff; color: white; }
+.alert { padding: 1rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; }
+.alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+.alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+.back-link { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: #007bff; font-size: 0.9rem; font-weight: normal; }
+.back-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Yeni Makine Ekle</h1>
+    
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+        
+        <p>
+            {{ form.kod.label }}<br>
+            {{ form.kod(size=32) }}
+        </p>
+        
+        <div class="form-group">
+             <label for="Yakit">Yakıt</label>
+             <input list="yakit-listesi"  id="yakit"   name="yakit" required>
+            <datalist id="yakit-listesi">
+                <option value="Elektrikli">
+                <option value="Dizel">
+                <option value="Hybrid"> 
+            </datalist>
+        </div>    
+
+        <div class="form-group">
+             <label for="tipi">Tipi</label>
+             <input list="tip-listesi"  id="tipi"   name="tipi" required>
+            <datalist id="tip-listesi">
+                <option value="Manlift">
+                <option value="Eklemli">
+                <option value="Teleskopik sepet">
+                <option value="Forklift">   
+            </datalist>
+
+             
+        </div>
+
+
+         <div class="form-group">
+             <label for="marka">Markası</label>
+             <input list="marka-listesi" id="marka" name="marka" required>
+
+            <datalist id="marka-listesi">
+                <option value="Dingli">
+                <option value="Sinoboom">
+                <option value="Zoomlion">
+                <option value="Mantall">
+                <option value="Haulotte">
+                <option value="LGMC">
+                <option value="JLG">
+                <option value="Genie">
+                <option value="Skyjack">
+                <option value="Ygs">
+                <option value="Lonking">
+                <option value="TCM">
+                <option value="Hyster">
+                <option value="Komatsu">
+            </datalist>
+        </div>
+
+       
+            {{ form.seri_no.label }}<br>
+            {{ form.seri_no(size=32) }}
+        </p>
+        <p>
+            {{ form.calisma_yuksekligi.label }}<br>
+            {{ form.calisma_yuksekligi(size=32) }}
+        </p>
+        <p>
+            {{ form.kaldirma_kapasitesi.label }}<br>
+            {{ form.kaldirma_kapasitesi(size=32) }} 
+        </p>
+
+        <div class="form-group">
+            <label for="uretim_tarihi">Üretim Tarihi:</label>
+            <input type="date" id="uretim_tarihi" name="uretim_tarihi" required>
+        </div>
+
+     <!-- Butonlar -->
+        <div class="butonlar">
+         {{ form.submit(class_="buton") }}
+         <a href="{{ url_for('filo.index') }}" class="buton iptal">İptal</a>
+         </div>
+    </form>
+</body>
+<style>
+    .butonlar {
+        display: flex;
+        justify-content: flex-left; /* sola hizala */
+        gap: 40px; /* butonlar arası boşluk */
+        margin-top: 20px;
+    }
+
+    .buton {
+        display: inline-block;
+        padding: 10px 15px;
+        background-color: #007BFF;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .buton:hover {
+        background-color: #0056b3;
+    }
+
+    .buton.iptal {
+        background-color: #6c757d; /* gri */
+    }
+
+    .buton.iptal:hover {
+        background-color: #5a6268;
+    }
+</style>
+
+{% endblock %}
