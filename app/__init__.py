@@ -45,6 +45,13 @@ def create_app(config_class=Config):
     # /kiralama/.. ile başlayacak (örn: /kiralama/index)    
     app.register_blueprint(kiralama_bp, url_prefix='/kiralama')
 
+    
+    # Firmalar Blueprint'i
+    from app.firmalar import firmalar_bp    
+    # url_prefix='/firmalar' sayesinde bu blueprint'teki tüm URL'ler
+    # /firmalar/.. ile başlayacak (örn: /firmalar/index)    
+    app.register_blueprint(firmalar_bp, url_prefix='/firmalar')
+
 
     # 5. Bitmiş uygulamayı fabrikadan döndür
     return app

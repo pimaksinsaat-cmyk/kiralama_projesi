@@ -21,21 +21,13 @@ def ekle():
     Yeni makine ekleme formunu gösterir (GET) ve işler (POST).
     """
     form = EkipmanForm()
+    # Son kaydı çekiyoruz
+    son_ekipman = Ekipman.query.order_by(Ekipman.id.desc()).first()
+    son_kod = son_ekipman.kod if son_ekipman else 'Kayıtlı makine yok'
     
     if form.validate_on_submit():
         
-        # --- DEĞİŞİKLİK 2: String'i date objesine çevirme ---
-        uretim_tarihi_obj = None # Varsayılan olarak boş
-        uretim_tarihi_str = form.uretim_tarihi.data
         
-        # Eğer formdan bir tarih geldiyse (boş değilse)
-        if uretim_tarihi_str:
-            # Gelen 'YYYY-MM-DD' formatındaki string'i date objesine çevir
-            # Not: .data'yı str() içine almak, bazen date objesi gelirse diye
-            # hatayı önler, ama sizin durumunuzda hep string geliyor.
-            uretim_tarihi_obj = datetime.strptime(str(uretim_tarihi_str), '%Y-%m-%d').date()
-        # --- DEĞİŞİKLİK SONU ---
-
         yeni_ekipman = Ekipman(
             kod=form.kod.data,
             yakit=form.yakit.data,
@@ -44,7 +36,7 @@ def ekle():
             seri_no=form.seri_no.data,
             calisma_yuksekligi=form.calisma_yuksekligi.data,
             kaldirma_kapasitesi=form.kaldirma_kapasitesi.data, 
-            uretim_tarihi=uretim_tarihi_obj  # Buraya artık string değil, date objesi atanıyor
+            uretim_tarihi=form.uretim_tarihi.data  # Buraya artık string değil, date objesi atanıyor
         )
         
         db.session.add(yeni_ekipman)
@@ -54,7 +46,7 @@ def ekle():
         
         return redirect(url_for('filo.index'))
     
-    return render_template('filo/ekle.html', form=form)
+    return render_template('filo/ekle.html', form=form, son_kod=son_kod)
 
 # --- 3. Makine Silme İşlemi ---
 @filo_bp.route('/sil/<int:id>', methods=['POST'])
@@ -82,14 +74,6 @@ def duzelt(id):
     
     if form.validate_on_submit():
         
-        # --- DEĞİŞİKLİK 3: String'i date objesine çevirme ---
-        uretim_tarihi_obj = None # Varsayılan olarak boş
-        uretim_tarihi_str = form.uretim_tarihi.data
-        
-        if uretim_tarihi_str:
-            uretim_tarihi_obj = datetime.strptime(str(uretim_tarihi_str), '%Y-%m-%d').date()
-        # --- DEĞİŞİKLİK SONU ---
-        
         ekipman.marka = form.marka.data
         ekipman.yakit = form.yakit.data
         ekipman.tipi = form.tipi.data
@@ -97,7 +81,7 @@ def duzelt(id):
         ekipman.seri_no = form.seri_no.data
         ekipman.calisma_yuksekligi = form.calisma_yuksekligi.data
         ekipman.kaldirma_kapasitesi = form.kaldirma_kapasitesi.data
-        ekipman.uretim_tarihi = uretim_tarihi_obj # Buraya da date objesi atanıyor
+        ekipman.uretim_tarihi = form.uretim_tarihi.data # Buraya da date objesi atanıyor
 
         db.session.commit()
         

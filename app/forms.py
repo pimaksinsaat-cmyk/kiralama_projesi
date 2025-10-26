@@ -16,6 +16,18 @@ class EkipmanForm(FlaskForm):
     uretim_tarihi = StringField('Üretim Tarihi', validators=[DataRequired()])   
     submit = SubmitField('Kaydet')
 
+class FirmaForm(FlaskForm):
+    """
+    Yeni firma eklemek için kullanılacak form.
+    """
+    firma_adi = StringField('Firma Adı', validators=[DataRequired()])
+    yetkili_adi = StringField('Yetkili Kişi', validators=[DataRequired()])
+    iletisim_bilgileri = StringField('Adres', validators=[DataRequired()])
+    vergi_dairesi = StringField('Vergi Dairesi', validators=[DataRequired()])
+    vergi_no = StringField('Vergi Numarası', validators=[DataRequired()])  
+    submit = SubmitField('Kaydet')
+
+
 class KiralamaForm(FlaskForm):
     """
     Makine kiralama işlemi için kullanılacak form.
@@ -28,3 +40,5 @@ class KiralamaForm(FlaskForm):
     kiralama_brm_fiyat = StringField('Kira Birim Fiyatı', validators=[DataRequired()])  
     nakliye_fiyat = StringField('Nakliye Fiyatı', validators=[DataRequired()])  
     submit = SubmitField('Kirala')  
+
+

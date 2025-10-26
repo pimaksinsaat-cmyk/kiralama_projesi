@@ -12,7 +12,7 @@ class Ekipman(db.Model):
     seri_no = db.Column(db.String(100), unique=True, nullable=False, index=True)
     calisma_yuksekligi = db.Column(db.String(100), nullable=False)
     kaldirma_kapasitesi = db.Column(db.String(100), nullable=False) 
-    uretim_tarihi = db.Column(db.Date, nullable=False)  # Üretim tarihi
+    uretim_tarihi = db.Column(db.String(100), nullable=False)  # Üretim tarihi
     calısma_durumu = db.Column(db.String(50), nullable=False, default='')  # 'bosta' veya 'kirada' gibi değerler alabilir
 
     def __repr__(self):
@@ -23,7 +23,7 @@ class Musteri(db.Model):
     Müşteri bilgilerini temsil eden model.
     """
     id = db.Column(db.Integer, primary_key=True)
-    firma_adi = db.Column(db.String(150), primary_key=True)
+    firma_adi = db.Column(db.String(150), nullable=False)
     yetkili_adi = db.Column(db.String(100), nullable=False)
     iletisim_bilgileri = db.Column(db.String(200), nullable=False) 
     vergi_dairesi = db.Column(db.String(100), nullable=False)

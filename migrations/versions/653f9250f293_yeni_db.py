@@ -1,8 +1,8 @@
-"""yeni yükleme
+"""yeni db
 
-Revision ID: fadd13151240
+Revision ID: 653f9250f293
 Revises: 
-Create Date: 2025-10-25 17:59:30.331861
+Create Date: 2025-10-26 12:06:55.268046
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'fadd13151240'
+revision = '653f9250f293'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -27,7 +27,7 @@ def upgrade():
     sa.Column('seri_no', sa.String(length=100), nullable=False),
     sa.Column('calisma_yuksekligi', sa.String(length=100), nullable=False),
     sa.Column('kaldirma_kapasitesi', sa.String(length=100), nullable=False),
-    sa.Column('uretim_tarihi', sa.Date(), nullable=False),
+    sa.Column('uretim_tarihi', sa.String(length=100), nullable=False),
     sa.Column('calısma_durumu', sa.String(length=50), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -53,7 +53,7 @@ def upgrade():
     sa.Column('iletisim_bilgileri', sa.String(length=200), nullable=False),
     sa.Column('vergi_dairesi', sa.String(length=100), nullable=False),
     sa.Column('vergi_no', sa.String(length=50), nullable=False),
-    sa.PrimaryKeyConstraint('id', 'firma_adi'),
+    sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('vergi_no')
     )
     # ### end Alembic commands ###

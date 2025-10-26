@@ -29,7 +29,7 @@ a:hover { text-decoration: underline; }
 <body>
 <div class="container">
 
-    <h1>Makine Parkı (Filo)</h1>
+    <h1>Müşteri Listesi </h1>
     
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -42,34 +42,30 @@ a:hover { text-decoration: underline; }
     {% endwith %}
 
     <p>
-        <a href="{{ url_for('filo.ekle') }}">Yeni Makine Ekle</a>
-         <a href="{{ url_for('main.index') }}">Ana Sayfaya Dön</a>
+        <a href="{{ url_for('firmalar.ekle') }}">Yeni Firma Ekle</a>
+        <a href="{{ url_for('main.index') }}">Ana Sayfaya Dön</a>
     </p>
 
     <table>
         <thead>
             <tr>
-                <th>Makine Kodu</th>
-                <th>Yakıt Türü</th>
-                <th>Makine Tipi</th>
-                <th>Makine Markası</th>
-                <th>Çalışma Yüksekliği</th>
-                <th>Kaldırma Kapasitesi</th>
-                <th>Üretim Tarihi</th>
-                <th>Kiraya Ver</th>
+                <th>Firma Adı</th>
+                <th>Yetkili Kişi</th>
+                <th>Adres</th>
+                <th>Vergi Dairesi</th>
+                <th>Vergi Numarası</th>
                 <th>İşlemler</th>
             </tr>
         </thead>
         <tbody>
-            {% for ekipman in ekipmanlar %}
+            {% for musteriler in musteriler %}
             <tr>
-                <td>{{ ekipman.kod }}</td>
-                <td>{{ ekipman.yakit }}</td>
-                <td>{{ ekipman.tipi }}</td>
-                <td>{{ ekipman.marka }}</td>
-                <td>{{ ekipman.calisma_yuksekligi }}</td>
-                <td>{{ ekipman.kaldirma_kapasitesi }}</td>
-                <td>{{ ekipman.uretim_tarihi }}</td>
+                <td>{{ musteri.firma_adi }}</td>
+                <td>{{ musteri.yetkili_adi }}</td>
+                <td>{{ musteri.iletisim_bilgileri }}</td>
+                <td>{{ musteri.vergi_dairesi }}</td>
+                <td>{{ musteri.vergi_no }}</td>
+                
                 
                 <td>
                     {% if not ekipman.calisma_durumu %}
@@ -90,7 +86,7 @@ a:hover { text-decoration: underline; }
             </tr>
             {% else %}
             <tr>
-                <td colspan="7">Kayıtlı makine bulunamadı.</td>
+                <td colspan="7">Kayıtlı müşteri bulunamadı.</td>
             </tr>
             {% endfor %}
         </tbody>
