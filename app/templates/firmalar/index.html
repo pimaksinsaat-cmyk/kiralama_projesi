@@ -60,7 +60,11 @@ a:hover { text-decoration: underline; }
         <tbody>
             {% for musteri in musteriler %}
             <tr>
-                <td>{{ musteri.firma_adi }}</td>
+                <td>
+                <a href="{{ url_for('firmalar.bilgi', id=musteri.id) }}">
+                {{ musteri.firma_adi }}
+                </a>
+                </td>   
                 <td>{{ musteri.yetkili_adi }}</td>
                 <td>{{ musteri.iletisim_bilgileri }}</td>
                 <td>{{ musteri.vergi_dairesi }}</td>

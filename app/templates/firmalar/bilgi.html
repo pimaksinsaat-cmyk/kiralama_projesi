@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+    
+    <h2>"{{ musteri.firma_adi }}" Cari Kartı</h2>
+    
+    {% if form %}
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+    </form>
+    {% endif %}
+
+    <div class="info-group">
+        <strong>Firma Adı:</strong> {{ musteri.firma_adi }}
+    </div>
+
+    <div class="info-group">
+        <strong>Yetkili Kişi:</strong> {{ musteri.yetkili_adi }}
+    </div>
+
+    <div class="info-group">
+        <strong>Adres:</strong> {{ musteri.iletisim_bilgileri }}
+    </div>
+
+    <div class="info-group">
+        <strong>Vergi Dairesi:</strong> {{ musteri.vergi_dairesi }}
+    </div>
+
+    <div class="info-group">
+        <strong>Vergi No:</strong> {{ musteri.vergi_no }}
+    </div>
+        
+    <div class="btn-container">
+        <a href="{{ url_for('firmalar.index') }}" class="btn btn-primary">Geri Dön</a>
+    </div>
+
+</div>
+{% endblock %}

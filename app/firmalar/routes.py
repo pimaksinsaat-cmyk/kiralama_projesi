@@ -84,3 +84,13 @@ def duzelt(id):
         return redirect(url_for('firmalar.index'))
     
     return render_template('firmalar/duzelt.html', form=form, musteri=musteri) 
+# --- 5. Müşteri Bilgi Sayfası ---
+@firmalar_bp.route('/bilgi/<int:id>', methods=['GET'])
+def bilgi(id):
+    """
+    ID'si verilen müşterinin detaylı bilgilerini gösterir.
+    """
+    musteri = Musteri.query.get_or_404(id)
+   
+    
+    return render_template('firmalar/bilgi.html', musteri=musteri)
