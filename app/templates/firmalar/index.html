@@ -58,7 +58,7 @@ a:hover { text-decoration: underline; }
             </tr>
         </thead>
         <tbody>
-            {% for musteriler in musteriler %}
+            {% for musteri in musteriler %}
             <tr>
                 <td>{{ musteri.firma_adi }}</td>
                 <td>{{ musteri.yetkili_adi }}</td>
@@ -66,23 +66,14 @@ a:hover { text-decoration: underline; }
                 <td>{{ musteri.vergi_dairesi }}</td>
                 <td>{{ musteri.vergi_no }}</td>
                 
-                
-                <td>
-                    {% if not ekipman.calisma_durumu %}
-                    <a class="btn btn-success" href="{{ url_for('kiralama.ekle') }}">Kiraya Ver</a>
-                    {% else %}  
-                    <span class="status status-kirada">Kirada</span>
-                    {% endif %} 
-                </td>
-
-                <td>
-                    <a href="{{ url_for('filo.duzelt', id=ekipman.id) }}">Düzelt</a>
+                  <td>
+                    <a href="{{ url_for('firmalar.duzelt', id=musteri.id) }}">Düzelt</a>
                     &nbsp; | &nbsp; 
-                    <form action="{{ url_for('filo.sil', id=ekipman.id) }}" method="POST" style="display:inline;">
+                    <form action="{{ url_for('firmalar.sil', id=musteri.id) }}" method="POST" style="display:inline;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="submit" class="btn-danger" value="Sil" onclick="return confirm('Bu makineyi silmek istediğinizden emin misiniz?')">
+                        <input type="submit" class="btn-danger" value="Sil" onclick="return confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')">
                     </form>
-                </td>
+                </td>          
             </tr>
             {% else %}
             <tr>
