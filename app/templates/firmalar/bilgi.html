@@ -32,9 +32,20 @@
         <strong>Vergi No:</strong> {{ musteri.vergi_no }}
     </div>
         
-    <div class="btn-container">
-        <a href="{{ url_for('firmalar.index') }}" class="btn btn-primary">Geri Dön</a>
-    </div>
-
+    
+        <div class="btn-container">
+          
+               
+                    
+        <a href="{{ url_for('firmalar.duzelt', id=musteri.id) }}" >Düzelt</a>
+         &nbsp; | &nbsp; 
+        <form action="{{ url_for('firmalar.sil', id=musteri.id) }}" method="POST" style="display:inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="submit" class="btn-danger" value="Sil" onclick="return confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')">
+        </form>
+          &nbsp; | &nbsp; 
+          <a href="{{ url_for('firmalar.index') }}" >Geri Dön</a>
+        </div>   
 </div>
+
 {% endblock %}

@@ -31,7 +31,7 @@
     /* Başlıklar (Firma Adı, Yetkili Kişi vb.) için stil */
     .info-group strong {
         display: inline-block;
-        min-width: 130px; /* Başlıkların hizalı durması için */
+        min-width: 200px; /* Başlıkların hizalı durması için */
         font-weight: 500; 
         color: #495057;
     }
@@ -40,7 +40,7 @@
         margin-bottom: .5rem;
         margin-top: .5rem;
         font-weight: 500;
-        color: #495057; 
+        color: #2384e4; 
     }
     input, select { 
         width: 100%;
@@ -75,4 +75,14 @@
     .btn-primary:hover {
         background-color: #0056b3;
     }
+    .btn-danger { 
+        background-color: #c82333; 
+        width: 10%;
+        color: white;
+         border: none;
+         padding: 5px 10px;
+         border-radius: 4px;
+         cursor: pointer;
+         font-size: 0.9em;
+         }
 

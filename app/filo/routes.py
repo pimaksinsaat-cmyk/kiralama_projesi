@@ -90,3 +90,13 @@ def duzelt(id):
         return redirect(url_for('filo.index'))
     
     return render_template('filo/duzelt.html', form=form, ekipman=ekipman)
+# --- 5. Makine Bilgi Sayfası ---
+@filo_bp.route('/bilgi/<int:id>', methods=['GET'])
+def bilgi(id):
+    """
+    ID'si verilen müşterinin detaylı bilgilerini gösterir.
+    """
+    ekipman  = Ekipman.query.get_or_404(id)
+   
+    
+    return render_template('filo/bilgi.html', ekipman=ekipman)

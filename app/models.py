@@ -38,6 +38,7 @@ class Kiralama(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True)
     kod = db.Column(db.String(100), nullable=False)  # Kiralanan makinenin kodu
+    kiralama_form_no = db.Column(db.String(100), nullable=True)  # Kiralama form numarası
     musteri_adi = db.Column(db.String(150), nullable=False)  # Müşteri adı
     musteri_iletisim = db.Column(db.String(200), nullable=False)  # Müşteri iletişim bilgileri
     kiralama_baslangıcı = db.Column(db.String(50), nullable=False)  # Kira başlangıç tarihi

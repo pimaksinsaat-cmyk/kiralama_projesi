@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Makine Parkı </title>
+<title>Kiralama Listasi </title>
 <style>
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
 .container { max-width: 1500px; margin: auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -29,7 +29,7 @@ a:hover { text-decoration: underline; }
 <body>
 <div class="container">
 
-    <h1>Müşteri Listesi </h1>
+    <h1>Kiralama Listesi </h1>
     
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -42,7 +42,7 @@ a:hover { text-decoration: underline; }
     {% endwith %}
 
     <p>
-        <a href="{{ url_for('firmalar.ekle') }}">Yeni Firma Ekle</a>
+        <a href="{{ url_for('kiralama.ekle') }}">Yeni Firma Ekle</a>
          &nbsp; | &nbsp; 
         <a href="{{ url_for('main.index') }}">Ana Sayfaya Dön</a>
     </p>
@@ -50,32 +50,40 @@ a:hover { text-decoration: underline; }
     <table>
         <thead>
             <tr>
+                <th>Kiralama Form No</th>
                 <th>Firma Adı</th>
-                <th>Yetkili Kişi</th>
-                <th>Adres</th>
-                <th>Vergi Dairesi</th>
-                <th>Vergi Numarası</th>
-                <th>İşlemler</th>
+                <th>Makine Kodu</th>
+                <th>Başlangıç Tarihi</th>
+                <th>Bitiş Tarihi</th>
+                <th>Kiralanan Gün Sayısı</th>
+                <th>Kira Birim Fiyatı</th>
+                <th>Nakliye Birim Fiyatı</th>
+                <th>Toplam Tutar</th>
             </tr>
         </thead>
         <tbody>
-            {% for musteri in musteriler %}
+            {% for kiralama in kiralamalar %}
             <tr>
+                <td> {{ kiralama.kiralama_form_no }}   </td>
+                <td>{{ kiralama.musteri_adi }}</td>
+                <td>{{ kiralama.kod }}</td>
+                <td>{{ kiralama.kiralama_baslangıcı }}</td>
+                <td>{{ kiralama.kiralama_bitis }}</td>    
                 <td>
-                <a href="{{ url_for('firmalar.bilgi', id=musteri.id) }}">
-                {{ musteri.firma_adi }}
-                </a>
-                </td>   
-                <td>{{ musteri.yetkili_adi }}</td>
-                <td>{{ musteri.iletisim_bilgileri }}</td>
-                <td>{{ musteri.vergi_dairesi }}</td>
-                <td>{{ musteri.vergi_no }}</td>
-                
+                    {% if kiralama.gun_sayisi is not none %}
+                    {{ kiralama.gun_sayisi }} gün
+                    {% else %}
+                     -
+                    {% endif %}
+                </td>
+                <td>{{ kiralama.kiralama_brm_fiyat }}</td>       
+                <td>{{ kiralama.nakliye_fiyat }}</td>
+                <td>{{ kiralama.toplam_fiyat }} </td>   
                     
             </tr>
             {% else %}
             <tr>
-                <td colspan="7">Kayıtlı müşteri bulunamadı.</td>
+                <td colspan="7">Kayıt bulunamadı.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -84,3 +92,4 @@ a:hover { text-decoration: underline; }
 </div>
 </body>
 </html>
+

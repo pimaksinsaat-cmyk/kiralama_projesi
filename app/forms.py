@@ -33,6 +33,7 @@ class KiralamaForm(FlaskForm):
     Makine kiralama işlemi için kullanılacak form.
     """
     kod = StringField('Makine Kodu', validators=[DataRequired()])
+    kiralama_form_no = StringField('Kiralama Form Numarası', validators=[DataRequired()])
     musteri_adi = StringField('Müşteri Adı', validators=[DataRequired()])
     musteri_iletisim = StringField('Müşteri İletişim Bilgileri', validators=[DataRequired()])
     kiralama_baslangıcı = StringField('Kira Başlangıç Tarihi', validators=[DataRequired()])
@@ -40,5 +41,4 @@ class KiralamaForm(FlaskForm):
     kiralama_brm_fiyat = StringField('Kira Birim Fiyatı', validators=[DataRequired()])  
     nakliye_fiyat = StringField('Nakliye Fiyatı', validators=[DataRequired()])  
     submit = SubmitField('Kirala')  
-
 

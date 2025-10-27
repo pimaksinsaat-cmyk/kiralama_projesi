@@ -43,6 +43,7 @@ a:hover { text-decoration: underline; }
 
     <p>
         <a href="{{ url_for('filo.ekle') }}">Yeni Makine Ekle</a>
+          &nbsp; | &nbsp; 
          <a href="{{ url_for('main.index') }}">Ana Sayfaya Dön</a>
     </p>
 
@@ -63,7 +64,10 @@ a:hover { text-decoration: underline; }
         <tbody>
             {% for ekipman in ekipmanlar %}
             <tr>
-                <td>{{ ekipman.kod }}</td>
+                <td>
+                     <a href="{{ url_for('filo.bilgi', id=ekipman.id) }}">
+                    {{ ekipman.kod }}</a>
+                </td>
                 <td>{{ ekipman.yakit }}</td>
                 <td>{{ ekipman.tipi }}</td>
                 <td>{{ ekipman.marka }}</td>
@@ -78,15 +82,7 @@ a:hover { text-decoration: underline; }
                     <span class="status status-kirada">Kirada</span>
                     {% endif %} 
                 </td>
-
-                <td>
-                    <a href="{{ url_for('filo.duzelt', id=ekipman.id) }}">Düzelt</a>
-                    &nbsp; | &nbsp; 
-                    <form action="{{ url_for('filo.sil', id=ekipman.id) }}" method="POST" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="submit" class="btn-danger" value="Sil" onclick="return confirm('Bu makineyi silmek istediğinizden emin misiniz?')">
-                    </form>
-                </td>
+               
             </tr>
             {% else %}
             <tr>
