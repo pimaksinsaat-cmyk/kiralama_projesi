@@ -42,7 +42,7 @@ a:hover { text-decoration: underline; }
     {% endwith %}
 
     <p>
-        <a href="{{ url_for('kiralama.ekle') }}">Yeni Firma Ekle</a>
+        <a href="{{ url_for('kiralama.ekle') }}">Kiralama Yap</a>
          &nbsp; | &nbsp; 
         <a href="{{ url_for('main.index') }}">Ana Sayfaya Dön</a>
     </p>
@@ -65,8 +65,9 @@ a:hover { text-decoration: underline; }
             {% for kiralama in kiralamalar %}
             <tr>
                 <td> {{ kiralama.kiralama_form_no }}   </td>
-                <td>{{ kiralama.musteri_adi }}</td>
-                <td>{{ kiralama.kod }}</td>
+                 <td>{{ kiralama.musteri.firma_adi }}</td>
+                <td>{{ kiralama.ekipman.kod }}</td>
+               
                 <td>{{ kiralama.kiralama_baslangıcı }}</td>
                 <td>{{ kiralama.kiralama_bitis }}</td>    
                 <td>

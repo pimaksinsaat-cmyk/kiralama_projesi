@@ -76,7 +76,7 @@ a:hover { text-decoration: underline; }
                 <td>{{ ekipman.uretim_tarihi }}</td>
                 
                 <td>
-                    {% if not ekipman.calisma_durumu %}
+                    {% if ekipman.calisma_durumu=='bosta' %}
                     <a class="btn btn-success" href="{{ url_for('kiralama.ekle') }}">Kiraya Ver</a>
                     {% else %}  
                     <span class="status status-kirada">Kirada</span>

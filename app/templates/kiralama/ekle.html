@@ -1,63 +1,53 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="container">
-    <h2>Yeni Kiralama Ekle</h2>
-    
+<div class="container">
+  <h2>Yeni Kiralama Ekle</h2>
 
-        <form action="" method="POST" novalidate>
-        {{ form.hidden_tag() }}
-            
-            <div class="form-group">
-                <label for="kiralama_form_no">Kiralama Form Numarası :</label>
-                <input type="text" id="kiralama_form_no" name="kiralama_form_no" required>  
-            </div>
-        
-            <div class="form-group">
-                <label for="musteri_adi">Müşteri Seç :</label>
-                <input type="text" id="musteri_adi" name="musteri_adi" required>
-            </div>
+  <form method="POST" novalidate>
+    {{ form.hidden_tag() }}
 
-            <div class="form-group">
-                <label for="kod">Ekipman Seç :</label>
-                <input type="text" id="kod" name="kod" required>
-            </div>
+    <div class="form-group">
+      <label>{{ form.kiralama_form_no.label }}</label>
+      {{ form.kiralama_form_no(class="form-control") }}
+    </div>
 
+    <div class="form-group">
+      <label>{{ form.musteri_id.label }}</label>
+      {{ form.musteri_id(class="form-control") }}
+    </div>
 
-            <div class="form-group">
-                <label for="musteri_iletisim">Müşteri İletişim Bilgileri :</label>
-                <input type="text" id="musteri_iletisim" name="musteri_iletisim" required>
-            </div>
+    <div class="form-group">
+      <label>{{ form.ekipman_id.label }}</label>
+      {{ form.ekipman_id(class="form-control") }}
+    </div>
 
-            <div class="form-group">
-                <label for="kiralama_baslangıcı">Kiralama Başlangıç Tarihi :</label>   
-                <input type="date" id="kiralama_baslangıcı" name="kiralama_baslangıcı" required>
-            </div>
-     
-            <div class="form-group">
-                 <label for="kiralama_bitis">Kiralama Bitiş Tarihi:</label>
-                <input type="date"  id="kiralama_bitis" name="kiralama_bitis" required>     
-            </div>
-       
-             <div class="form-group">
-                 <label for="kiralama_brm_fiyat">Kira Birim Fiyatı:</label>
-                <input type="number"  id="kiralama_brm_fiyat" name="kiralama_brm_fiyat" required> 
-            </div>
+  
 
-            
-            <div class="form-group">
-                 <label for="nakliye_fiyat">Nakliye Birim Fiyatı:</label>
-                <input type="number"  id="nakliye_fiyat" name="nakliye_fiyat" required>
-            </div>
+    <div class="form-group">
+      <label>{{ form.kiralama_baslangıcı.label }}</label>
+      {{ form.kiralama_baslangıcı(class="form-control") }}
+    </div>
 
-            <div class="btn-container"> 
-                
-                <button type="submit" class="btn btn-primary">Kaydet</button>
-                {# ".buton .iptal" yerine ".btn .btn-secondary" #}
-                <a href="{{ url_for('kiralama.index') }}" class="btn btn-secondary">İptal</a>
-            </div>
-    </form>
+    <div class="form-group">
+      <label>{{ form.kiralama_bitis.label }}</label>
+      {{ form.kiralama_bitis(class="form-control") }}
+    </div>
 
+    <div class="form-group">
+      <label>{{ form.kiralama_brm_fiyat.label }}</label>
+      {{ form.kiralama_brm_fiyat(class="form-control") }}
+    </div>
 
+    <div class="form-group">
+      <label>{{ form.nakliye_fiyat.label }}</label>
+      {{ form.nakliye_fiyat(class="form-control") }}
+    </div>
+
+    <div class="btn-container mt-3">
+      {{ form.submit(class="btn btn-primary") }}
+      <a href="{{ url_for('kiralama.index') }}" class="btn btn-secondary">İptal</a>
+    </div>
+  </form>
 </div>
 {% endblock %}

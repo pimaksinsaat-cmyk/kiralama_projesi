@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms import StringField, DecimalField, SelectField, DateField, SubmitField
+from wtforms.validators import DataRequired, Optional
 
 class EkipmanForm(FlaskForm):
     """
@@ -28,17 +28,17 @@ class FirmaForm(FlaskForm):
     submit = SubmitField('Kaydet')
 
 
-class KiralamaForm(FlaskForm):
-    """
-    Makine kiralama işlemi için kullanılacak form.
-    """
-    kod = StringField('Makine Kodu', validators=[DataRequired()])
-    kiralama_form_no = StringField('Kiralama Form Numarası', validators=[DataRequired()])
-    musteri_adi = StringField('Müşteri Adı', validators=[DataRequired()])
-    musteri_iletisim = StringField('Müşteri İletişim Bilgileri', validators=[DataRequired()])
-    kiralama_baslangıcı = StringField('Kira Başlangıç Tarihi', validators=[DataRequired()])
-    kiralama_bitis = StringField('Kira Bitiş Tarihi', validators=[DataRequired()])
-    kiralama_brm_fiyat = StringField('Kira Birim Fiyatı', validators=[DataRequired()])  
-    nakliye_fiyat = StringField('Nakliye Fiyatı', validators=[DataRequired()])  
-    submit = SubmitField('Kirala')  
 
+class KiralamaForm(FlaskForm):
+    kiralama_form_no = StringField('Kiralama Form No', validators=[Optional()])
+    
+    # ForeignKey alanları
+    ekipman_id = SelectField('Ekipman Seç', coerce=int, validators=[DataRequired()])
+    musteri_id = SelectField('Müşteri Seç', coerce=int, validators=[DataRequired()])
+
+    kiralama_baslangıcı = DateField('Kiralama Başlangıç Tarihi', format='%Y-%m-%d', validators=[DataRequired()])
+    kiralama_bitis = DateField('Kiralama Bitiş Tarihi', format='%Y-%m-%d', validators=[DataRequired()])
+    kiralama_brm_fiyat = DecimalField('Kira Birim Fiyatı', validators=[DataRequired()])
+    nakliye_fiyat = DecimalField('Nakliye Fiyatı', validators=[Optional()])
+
+    submit = SubmitField('Kaydet')
