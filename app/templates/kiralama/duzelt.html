@@ -111,6 +111,9 @@
 {% block scripts %}
 {{ super() }}
 <script>
+  const MEVCUT_EKIPMAN_ID = {{ form.ekipman_id.data or 'null' }};
+</script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
         
         // 1. Elementleri seç
@@ -140,8 +143,14 @@
             const minYukseklik = yukseklikInput.value || 0;
             const minKapasite = kapasiteInput.value || 0;
 
-            const url = `{{ url_for('kiralama.get_ekipman') }}?ekipman_tipi=${tipi}&ekipman_yakit=${yakit}&min_yukseklik=${minYukseklik}&min_kapasite=${minKapasite}`;
-            
+            // YENİ: URL, 'include_id' parametresini içerecek şekilde güncellendi
+             let url = `{{ url_for('kiralama.get_ekipman') }}?tipi=${tipi}&yakit=${yakit}&min_yukseklik=${minYukseklik}&min_kapasite=${minKapasite}`;
+
+            // Eğer 'MEVCUT_EKIPMAN_ID' varsa (yani 'duzelt' sayfasındaysak), 
+            // 'ekle' sayfasında bu 'null' olacaktır.
+            if (MEVCUT_EKIPMAN_ID) {
+                url += `&include_id=${MEVCUT_EKIPMAN_ID}`;
+            }
             try {
                 const response = await fetch(url);
                 const ekipmanlar = await response.json();
@@ -167,7 +176,7 @@
 
         // 4. Güncelleme fonksiyonunun "debounce" edilmiş halini oluştur
         const debouncedGuncelle = debounce(guncelleEkipmanListesi, 500);
-
+        
         // 5. Filtre inputlarına 'input' olayını ata
         tipiInput.addEventListener('input', debouncedGuncelle);
         yakitInput.addEventListener('input', debouncedGuncelle);
@@ -184,6 +193,7 @@
         yakitInput.addEventListener('click', clearInputOnClick);
 
         // 7. Sayfa ilk yüklendiğinde listeyi doldur
+        
         // ÖNEMLİ: Düzenleme sayfasında, sayfa ilk yüklendiğinde listeyi
         // doldurmak yerine, routes.py'den gelen seçili değeri göstermek daha
         // iyi olabilir. Ancak 'ekle' ile tutarlılık için bu kodu bırakıyoruz.

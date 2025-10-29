@@ -97,5 +97,23 @@
         flex-direction: column;
         flex: 1; /* her input eşit genişlikte olur */
     }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 0.9em;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    text-align: left;
+    vertical-align: middle;
+}
+
+th {
+    background-color: #e9ecef;
+    color: #343a40;
+}
 
 
