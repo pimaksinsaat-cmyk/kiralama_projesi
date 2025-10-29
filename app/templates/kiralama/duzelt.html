@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- BAŞLIK DEĞİŞTİ -->
+    <h2>Kiralama Düzenle</h2>
+
+    <!-- Flash mesajları -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            <label>{{ form.kiralama_form_no.label }}</label>
+            <!-- 
+                Bu alan 'ekle' fonksiyonunda otomatik oluşturulduğu için readonly idi.
+                Düzenleme ekranında da 'readonly' kalması mantıklı.
+            -->
+            {{ form.kiralama_form_no(class="form-control", readonly=true) }}
+        </div>
+
+        <div class="form-group">
+            <label>{{ form.musteri_id.label }}</label>
+            {{ form.musteri_id(class="form-control") }}
+        </div>
+
+        <hr>
+        
+        <h4>Ekipman Filtrele (Mevcut Ekipmanı Değiştirmek İçin)</h4>
+        <div class="form-row">
+            
+            <!-- Hizalama için col-md-3 ve manuel, kısa etiketler kullanıldı -->
+            
+            <div class="form-group col-md-3">
+                <label for="tipi_input">Tip</label>
+                {{ form.ekipman_tipi(class="form-control", id="tipi_input", list="tip-listesi", placeholder="Tüm Tipler") }}
+                <datalist id="tip-listesi">
+                    <option value="Manlift">
+                    <option value="Eklemli">
+                    <option value="Teleskopik sepet">
+                    <option value="Forklift">
+                </datalist>
+            </div>
+            
+            <div class="form-group col-md-3">
+                <label for="yakit_input">Yakıt</label>
+                {{ form.ekipman_yakit(class="form-control", id="yakit_input", list="yakit-listesi", placeholder="Tüm Yakıtlar") }}
+                <datalist id="yakit-listesi">
+                    <option value="Elektrikli">
+                    <option value="Dizel">
+                    <option value="Hybrid">
+                </datalist>
+            </div>
+            
+            <div class="form-group col-md-3">
+                <label for="min_yukseklik_input">Min. Yükseklik (m)</label>
+                {{ form.min_yukseklik(class="form-control", id="min_yukseklik_input") }}
+            </div>
+            
+            <div class="form-group col-md-3">
+                <label for="min_kapasite_input">Min. Kapasite (kg)</label>
+                {{ form.min_kapasite(class="form-control", id="min_kapasite_input") }}
+            </div>
+            
+        </div>
+
+        <div class="form-group">
+            <label>{{ form.ekipman_id.label }}</label>
+            {{ form.ekipman_id(class="form-control", id="ekipman_select") }}
+        </div>
+
+        <hr>
+
+        <div class="form-group">
+            <label>{{ form.kiralama_baslangıcı.label }}</label>
+            {{ form.kiralama_baslangıcı(class="form-control") }}
+        </div>
+
+        <div class="form-group">
+            <label>{{ form.kiralama_bitis.label }}</label>
+            {{ form.kiralama_bitis(class="form-control") }}
+        </div>
+
+        <div class="form-group">
+            <label>{{ form.kiralama_brm_fiyat.label }}</label>
+            {{ form.kiralama_brm_fiyat(class="form-control") }}
+        </div>
+
+        <div class="form-group">
+            <label>{{ form.nakliye_fiyat.label }}</label>
+            {{ form.nakliye_fiyat(class="form-control") }}
+        </div>
+
+        <div class="btn-container mt-3">
+            <!-- BUTON METNİ DEĞİŞTİ -->
+            {{ form.submit(class="btn btn-primary", value="Güncelle") }}
+            <a href="{{ url_for('kiralama.index') }}" class="btn btn-secondary">İptal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+<!-- SAYFANIN EN ALTINA JAVASCRIPT EKLİYORUZ (ekle.html ile aynı) -->
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // 1. Elementleri seç
+        const tipiInput = document.getElementById('tipi_input');
+        const yakitInput = document.getElementById('yakit_input');
+        const yukseklikInput = document.getElementById('min_yukseklik_input');
+        const kapasiteInput = document.getElementById('min_kapasite_input');
+        const ekipmanSelect = document.getElementById('ekipman_select');
+
+        // 2. Bir "debounce" fonksiyonu tanımla
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
+                timeoutId = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+        // 3. Ekipman listesini güncelleyen asıl fonksiyon
+        async function guncelleEkipmanListesi() {
+            const tipi = tipiInput.value || '';
+            const yakit = yakitInput.value || '';
+            const minYukseklik = yukseklikInput.value || 0;
+            const minKapasite = kapasiteInput.value || 0;
+
+            const url = `{{ url_for('kiralama.get_ekipman') }}?ekipman_tipi=${tipi}&ekipman_yakit=${yakit}&min_yukseklik=${minYukseklik}&min_kapasite=${minKapasite}`;
+            
+            try {
+                const response = await fetch(url);
+                const ekipmanlar = await response.json();
+
+                // Dropdown'ı temizle
+                ekipmanSelect.innerHTML = ''; 
+
+                // Yeni seçenekleri ekle
+                if (ekipmanlar.length === 0) {
+                    ekipmanSelect.options.add(new Option('Uygun ekipman bulunamadı', ''));
+                } else {
+                    ekipmanSelect.options.add(new Option('--- Ekipman Seçiniz ---', ''));
+                    ekipmanlar.forEach(function(ekipman) {
+                        ekipmanSelect.options.add(new Option(ekipman.kod, ekipman.id));
+                    });
+                }
+            } catch (error) {
+                console.error('Ekipman listesi yüklenemedi:', error);
+                ekipmanSelect.innerHTML = '';
+                ekipmanSelect.options.add(new Option('Liste yüklenemedi!', ''));
+            }
+        }
+
+        // 4. Güncelleme fonksiyonunun "debounce" edilmiş halini oluştur
+        const debouncedGuncelle = debounce(guncelleEkipmanListesi, 500);
+
+        // 5. Filtre inputlarına 'input' olayını ata
+        tipiInput.addEventListener('input', debouncedGuncelle);
+        yakitInput.addEventListener('input', debouncedGuncelle);
+        yukseklikInput.addEventListener('input', debouncedGuncelle);
+        kapasiteInput.addEventListener('input', debouncedGuncelle);
+
+        // 6. Tıklama davranışını iyileştir
+        function clearInputOnClick(event) {
+            event.target.value = '';
+            debouncedGuncelle();
+        }
+        
+        tipiInput.addEventListener('click', clearInputOnClick);
+        yakitInput.addEventListener('click', clearInputOnClick);
+
+        // 7. Sayfa ilk yüklendiğinde listeyi doldur
+        // ÖNEMLİ: Düzenleme sayfasında, sayfa ilk yüklendiğinde listeyi
+        // doldurmak yerine, routes.py'den gelen seçili değeri göstermek daha
+        // iyi olabilir. Ancak 'ekle' ile tutarlılık için bu kodu bırakıyoruz.
+        // routes.py'deki 'duzelt' fonksiyonunun seçili ekipmanı 
+        // listeye (choices) eklemesi gerekecek.
+        guncelleEkipmanListesi();
+    });
+</script>
+{% endblock %}

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, DecimalField, SelectField, DateField, SubmitField
+from wtforms import StringField, DecimalField, SelectField, DateField, SubmitField , IntegerField
 from wtforms.validators import DataRequired, Optional
 
 class EkipmanForm(FlaskForm):
@@ -32,6 +32,11 @@ class FirmaForm(FlaskForm):
 class KiralamaForm(FlaskForm):
     kiralama_form_no = StringField('Kiralama Form No', validators=[Optional()])
     
+    # Bu alanlar veritabanına kaydedilmeyecek, sadece filtreleme için.
+    min_yukseklik = IntegerField('Min. Çalışma Yüksekliği (m)', validators=[Optional()], default=0)
+    min_kapasite = IntegerField('Min. Kaldırma Kapasitesi (kg)', validators=[Optional()], default=0)
+    ekipman_tipi = StringField('Ekipman Tipi', validators=[Optional()])
+    ekipman_yakit = StringField('Ekipman Yakıt Türü', validators=[Optional()])
     # ForeignKey alanları
     ekipman_id = SelectField('Ekipman Seç', coerce=int, validators=[DataRequired()])
     musteri_id = SelectField('Müşteri Seç', coerce=int, validators=[DataRequired()])

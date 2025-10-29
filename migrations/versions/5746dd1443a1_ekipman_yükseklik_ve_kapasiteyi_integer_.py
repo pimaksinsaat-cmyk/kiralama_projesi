@@ -1,8 +1,8 @@
-"""db bağlantıları yapıldı
+"""Ekipman yükseklik ve kapasiteyi integer yaptı
 
-Revision ID: f4a25887b7ac
+Revision ID: 5746dd1443a1
 Revises: 
-Create Date: 2025-10-28 21:19:45.875185
+Create Date: 2025-10-29 08:24:35.112197
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'f4a25887b7ac'
+revision = '5746dd1443a1'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -25,8 +25,8 @@ def upgrade():
     sa.Column('tipi', sa.String(length=100), nullable=False),
     sa.Column('marka', sa.String(length=100), nullable=False),
     sa.Column('seri_no', sa.String(length=100), nullable=False),
-    sa.Column('calisma_yuksekligi', sa.String(length=100), nullable=False),
-    sa.Column('kaldirma_kapasitesi', sa.String(length=100), nullable=False),
+    sa.Column('calisma_yuksekligi', sa.Integer(), nullable=False),
+    sa.Column('kaldirma_kapasitesi', sa.Integer(), nullable=False),
     sa.Column('uretim_tarihi', sa.String(length=100), nullable=False),
     sa.Column('calisma_durumu', sa.String(length=50), nullable=False),
     sa.PrimaryKeyConstraint('id')

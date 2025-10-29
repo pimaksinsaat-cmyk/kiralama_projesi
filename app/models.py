@@ -9,8 +9,8 @@ class Ekipman(db.Model):
     tipi = db.Column(db.String(100), nullable=False, default='')
     marka = db.Column(db.String(100), nullable=False)
     seri_no = db.Column(db.String(100), unique=True, nullable=False, index=True)
-    calisma_yuksekligi = db.Column(db.String(100), nullable=False)
-    kaldirma_kapasitesi = db.Column(db.String(100), nullable=False)
+    calisma_yuksekligi = db.Column(db.Integer, nullable=False)
+    kaldirma_kapasitesi = db.Column(db.Integer, nullable=False)
     uretim_tarihi = db.Column(db.String(100), nullable=False)
     calisma_durumu = db.Column(db.String(50), nullable=False, default='bosta')
 

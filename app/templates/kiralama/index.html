@@ -2,35 +2,43 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Kiralama Listasi </title>
+<title>Kiralama Listesi</title>
+<!-- Minimal Stil (Daha önce sağlanan stili temel alır) -->
 <style>
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
-.container { max-width: 1500px; margin: auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-h1 { color: #343a40; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
-th, td { padding: 12px; border: 1px solid #dee2e6; text-align: left; vertical-align: middle;}
-th { background-color: #e9ecef; }
-.status { padding: 5px 10px; color: white; border-radius: 15px; text-align: center; font-weight: bold; font-size: 0.8em; }
-.status-bos { background-color: #28a745; text-align: center; font-size: 0.8em; }
-.status-kirada { background-color: #007bff; text-align: center; font-size: 0.8em; }
-a { color: #007bff; text-decoration: none; }
-a:hover { text-decoration: underline; }
-.btn { padding: 8px 12px; border-radius: 5px; text-decoration: none; font-weight: bold; color: white; transition: background-color 0.2s; }
-.btn-success { background-color: #28a745; }
-.btn-success:hover { background-color: #218838; color: white; }
-.btn-danger { background-color: #c82333; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
-.alert { padding: 1rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; }
-.alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
-.alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-.alert-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
-.footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
+    .container { max-width: 1500px; margin: auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h1 { color: #343a40; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
+    th, td { padding: 12px; border: 1px solid #dee2e6; text-align: left; vertical-align: middle;}
+    th { background-color: #e9ecef; }
+    a { color: #007bff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .btn { padding: 8px 12px; border-radius: 5px; text-decoration: none; font-weight: bold; color: white; transition: background-color 0.2s; border: none; cursor: pointer; font-size: 0.9em;}
+    .btn-danger { background-color: #c82333; }
+    .btn-danger:hover { background-color: #a71d2a; color: white; }
+    
+    /* Düzenle butonu için stil (artık kullanılmıyor ama kalabilir) */
+    .btn-info { background-color: #17a2b8; }
+    .btn-info:hover { background-color: #138496; color: white; }
+    
+    .alert { padding: 1rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; }
+    .alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+    .alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+    .alert-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
+    
+    /* Flash mesajları için stil */
+    ul.flashes { list-style: none; padding: 0; margin-bottom: 1rem; }
+    ul.flashes li { padding: 1rem; border-radius: .25rem; }
+    ul.flashes li.danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+    ul.flashes li.success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
 </style>
 </head>
 <body>
 <div class="container">
 
-    <h1>Kiralama Listesi </h1>
+    <h1>Kiralama Listesi</h1>
     
+    <!-- Flash Mesaj Alanı -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <ul class=flashes>
@@ -42,7 +50,7 @@ a:hover { text-decoration: underline; }
     {% endwith %}
 
     <p>
-        <a href="{{ url_for('kiralama.ekle') }}">Kiralama Yap</a>
+        <a href="{{ url_for('kiralama.ekle') }}">Yeni Kiralama Yap</a>
          &nbsp; | &nbsp; 
         <a href="{{ url_for('main.index') }}">Ana Sayfaya Dön</a>
     </p>
@@ -50,41 +58,60 @@ a:hover { text-decoration: underline; }
     <table>
         <thead>
             <tr>
-                <th>Kiralama Form No</th>
+                <th>Form No</th>
                 <th>Firma Adı</th>
                 <th>Makine Kodu</th>
-                <th>Başlangıç Tarihi</th>
-                <th>Bitiş Tarihi</th>
-                <th>Kiralanan Gün Sayısı</th>
-                <th>Kira Birim Fiyatı</th>
-                <th>Nakliye Birim Fiyatı</th>
+                <th>Başlangıç</th>
+                <th>Bitiş</th>
+                <th>Gün</th>
+                <th>Birim Fiyat</th>
+                <th>Nakliye</th>
                 <th>Toplam Tutar</th>
+                <th>İşlemler</th> <!-- SİL SÜTUNU -->
             </tr>
         </thead>
         <tbody>
             {% for kiralama in kiralamalar %}
             <tr>
-                <td> {{ kiralama.kiralama_form_no }}   </td>
-                 <td>{{ kiralama.musteri.firma_adi }}</td>
+                <td>
+                    <a href="{{ url_for('kiralama.bilgi', id=kiralama.id) }}">
+                    {{ kiralama.kiralama_form_no }}
+                </a>
+                </td>
+                <td>{{ kiralama.musteri.firma_adi }}</td>
                 <td>{{ kiralama.ekipman.kod }}</td>
-               
                 <td>{{ kiralama.kiralama_baslangıcı }}</td>
-                <td>{{ kiralama.kiralama_bitis }}</td>    
+                <td>{{ kiralama.kiralama_bitis }}</td>
                 <td>
                     {% if kiralama.gun_sayisi is not none %}
-                    {{ kiralama.gun_sayisi }} gün
+                      {{ kiralama.gun_sayisi }}
                     {% else %}
-                     -
+                      -
                     {% endif %}
                 </td>
-                <td>{{ kiralama.kiralama_brm_fiyat }}</td>       
+                <td>{{ kiralama.kiralama_brm_fiyat }}</td>
                 <td>{{ kiralama.nakliye_fiyat }}</td>
-                <td>{{ kiralama.toplam_fiyat }} </td>   
-                    
+                <td>{{ kiralama.toplam_fiyat }}</td>
+                
+                <!-- İşlemler -->
+                <td>
+                    <!-- DEĞİŞİKLİK: 'btn btn-info' class'ı kaldırıldı -->
+                    <a href="{{ url_for('kiralama.duzelt', id=kiralama.id) }}" style="margin-right: 10px;">Düzenle</a>
+
+                    <!-- 
+                       CSRF 400 Hatası almamak için formu POST metodu ile
+                       ve csrf_token() ile gönderiyoruz.
+                    -->
+                    <form action="{{ url_for('kiralama.sil', id=kiralama.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bu kiralama kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-danger">Sil</button>
+                    </form>
+                </td>
+                
             </tr>
             {% else %}
             <tr>
-                <td colspan="7">Kayıt bulunamadı.</td>
+                <td colspan="10">Kayıtlı kiralama bulunamadı.</td>
             </tr>
             {% endfor %}
         </tbody>
