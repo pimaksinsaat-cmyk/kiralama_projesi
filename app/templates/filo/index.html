@@ -1,42 +1,19 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<title>Makine Parkı</title>
-<!-- Bootstrap CSS (Modal için Gerekli) -->
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-<style>
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
-.container { max-width: 1500px; margin: auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-h1 { color: #343a40; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
-th, td { padding: 12px; border: 1px solid #dee2e6; text-align: left; vertical-align: middle;}
-th { background-color: #e9ecef; }
-.status { padding: 5px 10px; color: white; border-radius: 15px; text-align: center; font-weight: bold; font-size: 0.8em; }
-.status-bos { background-color: #28a745; }
-.status-kirada { background-color: #dc3545; }
-a { color: #007bff; text-decoration: none; }
-a:hover { text-decoration: underline; }
-.btn { padding: 8px 12px; border-radius: 5px; text-decoration: none; font-weight: bold; color: white; transition: background-color 0.2s; border: none; cursor: pointer;}
-.btn-success { background-color: #28a745; }
-.btn-success:hover { background-color: #218838; color: white; }
-.btn-danger { background-color: #c82333; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; }
-.btn-warning { background-color: #ffc107; color: #212529; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; text-decoration: none; }
-.btn-warning:hover { background-color: #e0a800; color: #212529; }
-.alert { padding: 1rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; }
-.alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
-.alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-.alert-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
-.header-actions { display: flex; justify-content: space-between; align-items: center; }
-</style>
-</head>
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+
 <body>
-<div class="container">
+<div class="container2">
 
     <div class="header-actions">
         <h1>Makine Parkı (Filo)</h1>
         <p>
-            <a href="{{ url_for('filo.ekle') }}" class="btn btn-success" style="margin-right: 10px;">Yeni Makine Ekle</a>
+            <div style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; margin-top: 20px;"></div>
+            <a href="{{ url_for('filo.ekle') }}" >Yeni Makine Ekle</a>
+            <span>|</span>
             <a href="{{ url_for('main.index') }}">Ana Sayfaya Dön</a>
         </p>
     </div>
@@ -49,7 +26,7 @@ a:hover { text-decoration: underline; }
       {% endif %}
     {% endwith %}
 
-    <table>
+    <table class="table">
         <thead>
             <tr>
                 <th>Makine Kodu</th>
@@ -76,7 +53,7 @@ a:hover { text-decoration: underline; }
                         <a class="btn btn-success" href="{{ url_for('kiralama.ekle') }}">Kiraya Ver</a>
                     {% else %} 
                         <!-- MODAL'I AÇAN BUTON -->
-                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#sonlandirModal" 
+                        <button type="button" class="btn-danger2" data-toggle="modal" data-target="#sonlandirModal" 
                                 data-ekipman-id="{{ ekipman.id }}" 
                                 data-ekipman-kod="{{ ekipman.kod }}">
                             Kirayı Sonlandır
@@ -86,10 +63,10 @@ a:hover { text-decoration: underline; }
                 
                 <!-- İŞLEMLER HÜCRESİ -->
                 <td style="text-align: center;">
-                    <a href="{{ url_for('filo.duzelt', id=ekipman.id) }}" class="btn btn-warning" style="margin-right: 5px;">Düzelt</a>
+                    <a href="{{ url_for('filo.duzelt', id=ekipman.id) }}" class="btn" style="margin-right: 5px;">Düzelt</a>
                     <form method="POST" action="{{ url_for('filo.sil', id=ekipman.id) }}" style="display: inline;" onsubmit="return confirm('Bu ekipmanı silmek istediğinizden emin misiniz?');">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="btn btn-danger" style="background-color: #8B0000;">Sil</button>
+                        <button type="submit" class="btn-danger" style="background-color: #8B0000;">Sil</button>
                     </form>
                 </td>
             </tr>
@@ -103,6 +80,8 @@ a:hover { text-decoration: underline; }
 
 </div>
 
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 <!-- KİRA SONLANDIRMA MODAL'I (AÇILIR PENCERE) -->
 <div class="modal fade" id="sonlandirModal" tabindex="-1" role="dialog" aria-labelledby="sonlandirModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -169,3 +148,4 @@ a:hover { text-decoration: underline; }
 </body>
 </html>
 
+{% endblock %}

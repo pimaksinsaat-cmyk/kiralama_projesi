@@ -1,49 +1,85 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, DecimalField, SelectField, DateField, SubmitField , IntegerField
-from wtforms.validators import DataRequired, Optional
+from wtforms import (
+    StringField, 
+    DecimalField, 
+    SelectField, 
+    DateField, 
+    SubmitField, 
+    FormField,  # Alt formları eklemek için
+    FieldList   # Alt form listesi oluşturmak için
+)
+# DataRequired yerine InputRequired kullanmak,
+# '' (boş metin) değerlerinin coerce=int veya Decimal()
+# hatalarına yol açmasını engeller.
+from wtforms.validators import Optional, InputRequired
+
+# --- 1. Ekipman Ekleme Formu ---
 
 class EkipmanForm(FlaskForm):
     """
     Yeni makine (ekipman) eklemek için kullanılacak form.
     """
-    kod = StringField('Makine Kodu', validators=[DataRequired()])
-    yakit = StringField('Yakıt Türü', validators=[DataRequired()])
-    tipi = StringField('Makine Tipi', validators=[DataRequired()])
-    marka = StringField('Makine Markası', validators=[DataRequired()])
-    seri_no = StringField('Makine Seri No', validators=[DataRequired()])
-    calisma_yuksekligi = StringField('Çalışma Yüksekliği', validators=[DataRequired()]) 
-    kaldirma_kapasitesi = StringField('Kaldırma Kapasitesi', validators=[DataRequired()])
-    uretim_tarihi = StringField('Üretim Tarihi', validators=[DataRequired()])   
+    kod = StringField('Makine Kodu', validators=[InputRequired()])
+    yakit = StringField('Yakıt Türü', validators=[InputRequired()])
+    tipi = StringField('Makine Tipi', validators=[InputRequired()])
+    marka = StringField('Makine Markası', validators=[InputRequired()])
+    seri_no = StringField('Makine Seri No', validators=[InputRequired()])
+    calisma_yuksekligi = StringField('Çalışma Yüksekliği (m)', validators=[InputRequired()]) 
+    kaldirma_kapasitesi = StringField('Kaldırma Kapasitesi (kg)', validators=[InputRequired()])
+    uretim_tarihi = StringField('Üretim Tarihi (Örn: 2023-10-31)', validators=[InputRequired()])
     submit = SubmitField('Kaydet')
+
+
+# --- 2. Müşteri (Firma) Ekleme Formu ---
 
 class FirmaForm(FlaskForm):
     """
-    Yeni firma eklemek için kullanılacak form.
+    Yeni firma (müşteri) eklemek için kullanılacak form.
     """
-    firma_adi = StringField('Firma Adı', validators=[DataRequired()])
-    yetkili_adi = StringField('Yetkili Kişi', validators=[DataRequired()])
-    iletisim_bilgileri = StringField('Adres', validators=[DataRequired()])
-    vergi_dairesi = StringField('Vergi Dairesi', validators=[DataRequired()])
-    vergi_no = StringField('Vergi Numarası', validators=[DataRequired()])  
+    firma_adi = StringField('Firma Adı', validators=[InputRequired()])
+    yetkili_adi = StringField('Yetkili Kişi', validators=[InputRequired()])
+    iletisim_bilgileri = StringField('Adres / İletişim', validators=[InputRequired()])
+    vergi_dairesi = StringField('Vergi Dairesi', validators=[InputRequired()])
+    vergi_no = StringField('Vergi Numarası', validators=[InputRequired()])
     submit = SubmitField('Kaydet')
 
 
+# --- 3. Kiralama Kalemi Alt Formu (DÜZELTİLDİ) ---
+
+class KiralamaKalemiForm(FlaskForm):
+    """
+    Ana Kiralama formundaki her bir ekipman satırını temsil eder.
+    """
+    
+    # WTForms alt formları için CSRF koruması ana formdan gelir.
+    class Meta:
+        csrf = False 
+
+    # DÜZELTME: 'coerce=int' KALDIRILDI.
+    # 'InputRequired' validatörü, 'value=""' olan 
+    # "--- Ekipman Seçiniz ---" seçeneğinin gönderilmesini engelleyecektir.
+    ekipman_id = SelectField('Ekipman Seç', validators=[InputRequired()])
+    
+    kiralama_baslangıcı = DateField('Başlangıç Tarihi', format='%Y-%m-%d', validators=[InputRequired()])
+    kiralama_bitis = DateField('Bitiş Tarihi', format='%Y-%m-%d', validators=[InputRequired()])
+    
+    # DecimalField için de InputRequired önemlidir
+    kiralama_brm_fiyat = DecimalField('Birim Fiyat', validators=[InputRequired()])
+    nakliye_fiyat = DecimalField('Nakliye Fiyatı', validators=[Optional()], default=0.0)
+    
+
+# --- 4. Ana Kiralama Formu (DÜZELTİLDİ) ---
 
 class KiralamaForm(FlaskForm):
+    """
+    Ana Kiralama Formu.
+    """
     kiralama_form_no = StringField('Kiralama Form No', validators=[Optional()])
     
-    # Bu alanlar veritabanına kaydedilmeyecek, sadece filtreleme için.
-    min_yukseklik = IntegerField('Min. Çalışma Yüksekliği (m)', validators=[Optional()], default=0)
-    min_kapasite = IntegerField('Min. Kaldırma Kapasitesi (kg)', validators=[Optional()], default=0)
-    ekipman_tipi = StringField('Ekipman Tipi', validators=[Optional()])
-    ekipman_yakit = StringField('Ekipman Yakıt Türü', validators=[Optional()])
-    # ForeignKey alanları
-    ekipman_id = SelectField('Ekipman Seç', coerce=int, validators=[DataRequired()])
-    musteri_id = SelectField('Müşteri Seç', coerce=int, validators=[DataRequired()])
+    # DÜZELTME: 'coerce=int' KALDIRILDI.
+    musteri_id = SelectField('Müşteri Seç', validators=[InputRequired()])
 
-    kiralama_baslangıcı = DateField('Kiralama Başlangıç Tarihi', format='%Y-%m-%d', validators=[DataRequired()])
-    kiralama_bitis = DateField('Kiralama Bitiş Tarihi', format='%Y-%m-%d', validators=[DataRequired()])
-    kiralama_brm_fiyat = DecimalField('Kira Birim Fiyatı', validators=[DataRequired()])
-    nakliye_fiyat = DecimalField('Nakliye Fiyatı', validators=[Optional()])
-
+    # 'kalemler' listesi, 'KiralamaKalemiForm' alt formlarını tutar
+    kalemler = FieldList(FormField(KiralamaKalemiForm), min_entries=1)
+    
     submit = SubmitField('Kaydet')

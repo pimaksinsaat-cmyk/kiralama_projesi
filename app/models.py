@@ -1,6 +1,14 @@
 from app import db
 
+#
+# ÖNEMLİ NOT: 'kiralama_ekipman_association' adlı db.Table nesnesi
+# bu yeni "Association Object" modelinde artık GEREKLİ DEĞİLDİR ve silinmiştir.
+#
+
 class Ekipman(db.Model):
+    """
+    Filodaki her bir makineyi temsil eder.
+    """
     __tablename__ = 'ekipman'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -14,14 +22,22 @@ class Ekipman(db.Model):
     uretim_tarihi = db.Column(db.String(100), nullable=False)
     calisma_durumu = db.Column(db.String(50), nullable=False, default='bosta')
 
-    # Kiralama ile ilişki
-    kiralamalar = db.relationship('Kiralama', back_populates='ekipman', cascade="all, delete-orphan")
+    # DEĞİŞEN İLİŞKİ:
+    # Bir Ekipman, birden çok 'KiralamaKalemi' satırında yer alabilir.
+    # 'Kiralama' ile doğrudan ilişkisi kalmadı.
+    kiralama_kalemleri = db.relationship('KiralamaKalemi', 
+                                         back_populates='ekipman', 
+                                         cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Ekipman {self.kod}>'
 
 
 class Musteri(db.Model):
+    """
+    Müşteri (Firma) bilgilerini tutar.
+    Bu modelde bir değişiklik yapılmadı.
+    """
     __tablename__ = 'musteri'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -31,31 +47,78 @@ class Musteri(db.Model):
     vergi_dairesi = db.Column(db.String(100), nullable=False)
     vergi_no = db.Column(db.String(50), unique=True, nullable=False)
 
-    # Kiralama ile ilişki
-    kiralamalar = db.relationship('Kiralama', back_populates='musteri', cascade="all, delete-orphan")
+    # Kiralama (ana form) ile bire-çok ilişkisi devam ediyor.
+    kiralamalar = db.relationship('Kiralama', 
+                                  back_populates='musteri', 
+                                  cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Musteri {self.firma_adi}>'
 
 
+class KiralamaKalemi(db.Model):
+    """
+    YENİ MODEL (Association Object)
+    Bu model, 'Kiralama' ve 'Ekipman' arasındaki ilişkiyi temsil eder
+    VE bu ilişkiye özel (fiyat, tarih gibi) verileri tutar.
+    """
+    __tablename__ = 'kiralama_kalemi'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # --- Yabancı Anahtarlar (Foreign Keys) ---
+    
+    # Hangi ana 'Kiralama' formuna ait?
+    kiralama_id = db.Column(db.Integer, db.ForeignKey('kiralama.id'), nullable=False)
+    
+    # Hangi 'Ekipman' bu satırda kiralanıyor?
+    ekipman_id = db.Column(db.Integer, db.ForeignKey('ekipman.id'), nullable=False)
+    
+    # --- Kaleme Özel Veriler (Kiralama modelinden buraya taşındı) ---
+    kiralama_baslangıcı = db.Column(db.String(50), nullable=False)
+    kiralama_bitis = db.Column(db.String(50), nullable=False)
+    kiralama_brm_fiyat = db.Column(db.String(50), nullable=False)
+    nakliye_fiyat = db.Column(db.String(50), nullable=False, default='0')
+    
+    # --- İlişki Tanımları (back_populates) ---
+    
+    # Bu kalemin ait olduğu ana formu 'kiralama' özelliğiyle çağırabilmemizi sağlar
+    kiralama = db.relationship('Kiralama', back_populates='kalemler')
+    
+    # Bu kalemin hangi ekipmanı temsil ettiğini 'ekipman' özelliğiyle çağırabilmemizi sağlar
+    ekipman = db.relationship('Ekipman', back_populates='kiralama_kalemleri')
+
+    def __repr__(self):
+        return f'<KiralamaKalemi (K:{self.kiralama_id} E:{self.ekipman_id} Fiyat:{self.kiralama_brm_fiyat})>'
+
+
 class Kiralama(db.Model):
+    """
+    Ana Kiralama Formu. Artık sadece Müşteri ve Form No gibi
+    genel bilgileri ve 'KiralamaKalemi' listesini tutar.
+    """
     __tablename__ = 'kiralama'
 
     id = db.Column(db.Integer, primary_key=True)
     kiralama_form_no = db.Column(db.String(100), nullable=True)
 
-    # 🔗 ForeignKey alanları
-    ekipman_id = db.Column(db.Integer, db.ForeignKey('ekipman.id'), nullable=False)
+    # Müşteri ilişkisi (Aynı kaldı)
     musteri_id = db.Column(db.Integer, db.ForeignKey('musteri.id'), nullable=False)
-
-    # İlişkiler
-    ekipman = db.relationship('Ekipman', back_populates='kiralamalar')
     musteri = db.relationship('Musteri', back_populates='kiralamalar')
 
-    kiralama_baslangıcı = db.Column(db.String(50), nullable=False)
-    kiralama_bitis = db.Column(db.String(50), nullable=False)
-    kiralama_brm_fiyat = db.Column(db.String(50), nullable=False)
-    nakliye_fiyat = db.Column(db.String(50), nullable=False)
+    # DEĞİŞEN İLİŞKİ:
+    # 'ekipmanlar' listesi yerine, 'KiralamaKalemi' nesnelerinin
+    # listesini tutan 'kalemler' listesi geldi.
+    kalemler = db.relationship('KiralamaKalemi', 
+                               back_populates='kiralama', 
+                               cascade="all, delete-orphan")
+
+    # TAŞINAN ALANLAR:
+    # Aşağıdaki 4 alan 'KiralamaKalemi' modeline taşındı:
+    # - kiralama_baslangıcı
+    # - kiralama_bitis
+    # - kiralama_brm_fiyat
+    # - nakliye_fiyat
 
     def __repr__(self):
         return f'<Kiralama {self.kiralama_form_no or ""} - {self.musteri.firma_adi}>'

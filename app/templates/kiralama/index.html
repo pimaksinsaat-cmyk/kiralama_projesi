@@ -1,122 +1,93 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<title>Kiralama Listesi</title>
-<!-- Minimal Stil (Daha önce sağlanan stili temel alır) -->
-<style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
-    .container { max-width: 1500px; margin: auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    h1 { color: #343a40; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
-    th, td { padding: 12px; border: 1px solid #dee2e6; text-align: left; vertical-align: middle;}
-    th { background-color: #e9ecef; }
-    a { color: #007bff; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .btn { padding: 8px 12px; border-radius: 5px; text-decoration: none; font-weight: bold; color: white; transition: background-color 0.2s; border: none; cursor: pointer; font-size: 0.9em;}
-    .btn-danger { background-color: #c82333; }
-    .btn-danger:hover { background-color: #a71d2a; color: white; }
-    
-    /* Düzenle butonu için stil (artık kullanılmıyor ama kalabilir) */
-    .btn-info { background-color: #17a2b8; }
-    .btn-info:hover { background-color: #138496; color: white; }
-    
-    .alert { padding: 1rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; }
-    .alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
-    .alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-    .alert-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
-    
-    /* Flash mesajları için stil */
-    ul.flashes { list-style: none; padding: 0; margin-bottom: 1rem; }
-    ul.flashes li { padding: 1rem; border-radius: .25rem; }
-    ul.flashes li.danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
-    ul.flashes li.success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-</style>
-</head>
-<body>
-<div class="container">
+{% extends "base.html" %}
 
-    <h1>Kiralama Listesi</h1>
-    
-    <!-- Flash Mesaj Alanı -->
+{% block content %}
+<div class="container2">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Kiralama Kayıtları</h1>
+       
+        <div style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; margin-top: 20px;">
+         <a href="{{ url_for('kiralama.ekle') }}" class="btn">Yeni Kiralama Ekle</a>
+         <span>|</span>
+         <a href="{{ url_for('main.index') }}">Ana Sayfaya Dön</a>
+        </div>
+
+
+
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <ul class=flashes>
         {% for category, message in messages %}
-          <li class="{{ category }}">{{ message }}</li>
+          <div class="alert alert-{{ category }}">{{ message }}</div>
         {% endfor %}
-        </ul>
       {% endif %}
     {% endwith %}
-
-    <p>
-        <a href="{{ url_for('kiralama.ekle') }}">Yeni Kiralama Yap</a>
-         &nbsp; | &nbsp; 
-        <a href="{{ url_for('main.index') }}">Ana Sayfaya Dön</a>
-    </p>
-
-    <table>
-        <thead>
+    <style>
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
+    </style>
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
             <tr>
                 <th>Form No</th>
-                <th>Firma Adı</th>
-                <th>Makine Kodu</th>
-                <th>Başlangıç</th>
-                <th>Bitiş</th>
-                <th>Gün</th>
-                <th>Birim Fiyat</th>
-                <th>Nakliye</th>
-                <th>Toplam Tutar</th>
-                <th>İşlemler</th> <!-- SİL SÜTUNU -->
+                <th>Müşteri</th>
+                <th>Kiralanan Ekipmanlar</th>
+                <th>Başlangıç Tarihleri</th>
+                <th>Bitiş Tarihleri</th>
+                <th>Birim Fiyatlar</th>
+                <th>İşlemler</th>
             </tr>
         </thead>
         <tbody>
-            {% for kiralama in kiralamalar %}
-            <tr>
-                <td>
-                    <a href="{{ url_for('kiralama.bilgi', id=kiralama.id) }}">
-                    {{ kiralama.kiralama_form_no }}
-                </a>
-                </td>
-                <td>{{ kiralama.musteri.firma_adi }}</td>
-                <td>{{ kiralama.ekipman.kod }}</td>
-                <td>{{ kiralama.kiralama_baslangıcı }}</td>
-                <td>{{ kiralama.kiralama_bitis }}</td>
-                <td>
-                    {% if kiralama.gun_sayisi is not none %}
-                      {{ kiralama.gun_sayisi }}
-                    {% else %}
-                      -
-                    {% endif %}
-                </td>
-                <td>{{ kiralama.kiralama_brm_fiyat }}</td>
-                <td>{{ kiralama.nakliye_fiyat }}</td>
-                <td>{{ kiralama.toplam_fiyat }}</td>
-                
-                <!-- İşlemler -->
-                <td>
-                    <!-- DEĞİŞİKLİK: 'btn btn-info' class'ı kaldırıldı -->
-                    <a href="{{ url_for('kiralama.duzelt', id=kiralama.id) }}" style="margin-right: 10px;">Düzenle</a>
+            {% if kiralamalar %}
+                {% for kiralama in kiralamalar %}
+                <tr>
+                    <td>{{ kiralama.kiralama_form_no }}</td>
+                    <td>{{ kiralama.musteri.firma_adi if kiralama.musteri else 'Müşteri Yok' }}</td>
+                    
+                    <td>
+                        {% for kalem in kiralama.kalemler %}
+                            {{ kalem.ekipman.kod if kalem.ekipman else 'Ekipman Yok' }}<br>
+                        {% endfor %}
+                    </td>
+                    
+                    <td>
+                        {% for kalem in kiralama.kalemler %}
+                            {{ kalem.kiralama_baslangıcı|tarihtr }}<br>
+                        {% endfor %}
+                    </td>
 
-                    <!-- 
-                       CSRF 400 Hatası almamak için formu POST metodu ile
-                       ve csrf_token() ile gönderiyoruz.
-                    -->
-                    <form action="{{ url_for('kiralama.sil', id=kiralama.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bu kiralama kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.');">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="btn btn-danger">Sil</button>
-                    </form>
-                </td>
-                
-            </tr>
+                    <td> {% for kalem in kiralama.kalemler %}
+                            {{ kalem.kiralama_bitis|tarihtr }} <br>
+                        {% endfor %}
+                    </td>
+
+                    <td>
+                        {% for kalem in kiralama.kalemler %}
+                            {{ kalem.kiralama_brm_fiyat }} TL<br>
+                        {% endfor %}
+                    </td>
+
+                    <td>
+                        <form action="{{ url_for('kiralama.sil', kiralama_id=kiralama.id) }}"
+                         method="POST" 
+                         style="display: inline;"
+                         onsubmit="return confirm('Bu kiralama kaydını (ve tüm kalemlerini) silmek istediğinize emin misiniz?');">
+        
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+                             <button type="submit" class="btn btn-danger2 btn-sm">
+                              Sil
+                             </button>
+                         </form>
+                        
+                    </td>
+                </tr>
+                {% endfor %}
             {% else %}
-            <tr>
-                <td colspan="10">Kayıtlı kiralama bulunamadı.</td>
-            </tr>
-            {% endfor %}
+                <tr>
+                    <td colspan="6" class="text-center">Henüz kiralama kaydı bulunmuyor.</td>
+                </tr>
+            {% endif %}
         </tbody>
+        
     </table>
-
 </div>
-</body>
-</html>
+{% endblock %}
