@@ -6,7 +6,8 @@ from wtforms import (
     DateField, 
     SubmitField, 
     FormField,  # Alt formları eklemek için
-    FieldList   # Alt form listesi oluşturmak için
+    FieldList,   # Alt form listesi oluşturmak için
+    HiddenField
 )
 # DataRequired yerine InputRequired kullanmak,
 # '' (boş metin) değerlerinin coerce=int veya Decimal()
@@ -51,19 +52,20 @@ class KiralamaKalemiForm(FlaskForm):
     Ana Kiralama formundaki her bir ekipman satırını temsil eder.
     """
     
-    # WTForms alt formları için CSRF koruması ana formdan gelir.
     class Meta:
         csrf = False 
 
-    # DÜZELTME: 'coerce=int' KALDIRILDI.
-    # 'InputRequired' validatörü, 'value=""' olan 
-    # "--- Ekipman Seçiniz ---" seçeneğinin gönderilmesini engelleyecektir.
+    # --- YENİ EKLENEN GİZLİ ALAN ---
+    # Bu, 'duzenle' formunda hangi satırın hangi veritabanı kaydına
+    # ait olduğunu takip etmemizi sağlar.
+    id = HiddenField('Kalem ID')
+    # --- YENİ ALAN SONU ---
+
     ekipman_id = SelectField('Ekipman Seç', validators=[InputRequired()])
     
     kiralama_baslangıcı = DateField('Başlangıç Tarihi', format='%Y-%m-%d', validators=[InputRequired()])
     kiralama_bitis = DateField('Bitiş Tarihi', format='%Y-%m-%d', validators=[InputRequired()])
     
-    # DecimalField için de InputRequired önemlidir
     kiralama_brm_fiyat = DecimalField('Birim Fiyat', validators=[InputRequired()])
     nakliye_fiyat = DecimalField('Nakliye Fiyatı', validators=[Optional()], default=0.0)
     

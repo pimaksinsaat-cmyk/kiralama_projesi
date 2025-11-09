@@ -9,6 +9,9 @@ from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload 
 
+# 'Optional' import'unu ekliyoruz (NameError için)
+from wtforms.validators import Optional 
+
 from app import db
 from app.kiralama import kiralama_bp
 from app.models import Kiralama, Ekipman, Musteri, KiralamaKalemi
@@ -24,12 +27,12 @@ def tarihtr(value):
          return value.strftime("%d.%m.%Y")
     if isinstance(value, str):
         try:
+            # Gelen string'in formatı YYYY-MM-DD olmalı
             value_dt = datetime.strptime(value, '%Y-%m-%d').date()
             return value_dt.strftime("%d.%m.%Y")
         except ValueError:
-            return value
+            return value # Formatı tanımazsa olduğu gibi geri döndür
     return value
-
 
 # --- 3. KİRALAMA LİSTELEME (ANA SAYFA) ---
 @kiralama_bp.route('/index')
@@ -51,6 +54,7 @@ def index():
 
 
 # --- 4. YENİ KİRALAMA EKLEME ---
+# (Bu fonksiyonda değişiklik yok, 25 Ekim tarihli son halini koruyoruz)
 @kiralama_bp.route('/ekle', methods=['GET', 'POST'])
 def ekle():
     """ Yeni kiralama kaydı oluşturur. """
@@ -107,6 +111,7 @@ def ekle():
 
         try:
             secilen_ekipman_idler = set()
+            kalemler_to_add = [] # Kaydetmeden önce kalemleri burada biriktir
             
             for kalem_data in form.kalemler.data:
                 try:
@@ -128,26 +133,40 @@ def ekle():
                     db.session.rollback()
                     return redirect(url_for('kiralama.ekle'))
                 
-                baslangic_str = kalem_data['kiralama_baslangıcı'].strftime("%Y-%m-%d") if kalem_data['kiralama_baslangıcı'] else None
-                bitis_str = kalem_data['kiralama_bitis'].strftime("%Y-%m-%d") if kalem_data['kiralama_bitis'] else None
+                baslangic = kalem_data['kiralama_baslangıcı']
+                bitis = kalem_data['kiralama_bitis']
+
+                if baslangic and bitis and bitis < baslangic:
+                    flash(f"Hata: Ekipman {secilen_ekipman.kod} için Bitiş Tarihi ({bitis.strftime('%d.%m.%Y')}), Başlangıç Tarihinden ({baslangic.strftime('%d.%m.%Y')}) önce olamaz.", "danger")
+                    db.session.rollback() 
+                    for kalem_form_field in form.kalemler:
+                        kalem_form_field.form.ekipman_id.choices = bosta_choices
+                    bosta_choices_json_err = json.dumps(bosta_choices)
+                    return render_template('kiralama/ekle.html', form=form, bosta_choices_json=bosta_choices_json_err)
+                
+                baslangic_str = baslangic.strftime("%Y-%m-%d") if baslangic else None
+                bitis_str = bitis.strftime("%Y-%m-%d") if bitis else None
                 
                 yeni_kalem = KiralamaKalemi(
-                    kiralama=yeni_kiralama,
-                    ekipman=secilen_ekipman,
+                    ekipman_id=ekipman_id,
                     kiralama_baslangıcı=baslangic_str,
                     kiralama_bitis=bitis_str,
                     kiralama_brm_fiyat=str(kalem_data['kiralama_brm_fiyat'] or 0),
                     nakliye_fiyat=str(kalem_data['nakliye_fiyat'] or 0)
                 )
                 
-                secilen_ekipman.calisma_durumu = "kirada"
+                kalemler_to_add.append((yeni_kalem, secilen_ekipman)) 
                 secilen_ekipman_idler.add(ekipman_id)
-                db.session.add(yeni_kalem)
 
             if not secilen_ekipman_idler:
                 flash("En az bir geçerli kiralama kalemi eklemelisiniz.", "danger")
                 db.session.rollback()
             else:
+                for kalem, ekipman in kalemler_to_add:
+                    kalem.kiralama = yeni_kiralama 
+                    ekipman.calisma_durumu = "kirada"
+                    db.session.add(kalem)
+                    
                 db.session.commit()
                 flash(f"{len(secilen_ekipman_idler)} kalem başarıyla kiralandı!", "success")
                 return redirect(url_for('kiralama.index')) 
@@ -166,8 +185,6 @@ def ekle():
                         if kalem_errors:
                             for sub_field, sub_errors in kalem_errors.items():
                                 flash(f"Satır {i+1} - {sub_field}: {', '.join(sub_errors)}", "danger")
-                # else:
-                #     flash(f"Form hatası - {field}: {', '.join(errors)}", "danger")
 
     bosta_choices_json = json.dumps(bosta_choices)
 
@@ -178,118 +195,140 @@ def ekle():
     )
 
 
-# --- 5. KİRALAMA KAYDI DÜZENLEME ---
+# --- 5. KİRALAMA KAYDI DÜZENLEME (GÜNCELLENDİ - 'id' ÇAKIŞMASI DÜZELTMESİ) ---
 @kiralama_bp.route('/duzenle/<int:kiralama_id>', methods=['GET', 'POST'])
 def duzenle(kiralama_id):
     """ Mevcut bir kiralama kaydını (ana form ve kalemleri) düzenler. """
     
     kiralama = Kiralama.query.options(
-        joinedload(Kiralama.kalemler)
+        joinedload(Kiralama.kalemler).joinedload(KiralamaKalemi.ekipman) 
     ).get_or_404(kiralama_id)
 
     form = KiralamaForm(obj=kiralama)
 
-    # --- DÜZELTME 1: "Choices cannot be None" HATASI İÇİN ---
-    # 'musteri_id' SelectField'inin 'choices' listesi 'POST' isteğinde de dolu olmalı.
+    # Düzeltme 1 & 2 (Müşteri Alanı)
     form.musteri_id.choices = [(m.id, m.firma_adi) for m in Musteri.query.all()]
+    form.musteri_id.validators = [Optional()] 
 
-    # --- DÜZELTME 2: "Formda Hatalar Var (Müşteri)" HATASI İÇİN ---
-    # 'musteri_id' alanı 'disabled' olduğu için forma gönderilmiyor.
-    # 'DataRequired' doğrulamasını geçmesi için bu alandaki doğrulamaları kaldırıyoruz.
-    form.musteri_id.validators = []
-
-    # --- DÜZELTME 3: "Formda Hatalar Var (Ekipman)" HATASI İÇİN ---
-    # 'ekipman_id' SelectField'lerinin 'choices' listesi 'POST' isteğinde de dolu olmalı.
-    # Bu blok 'validate_on_submit'ten ÖNCE çalışmalı.
-    
-    # 3a. 'Bosta' olan tüm ekipmanları al
+    # Düzeltme 3: Ekipman 'choices' listesi 'POST'ta da dolu olmalı
     bosta_ekipmanlar = Ekipman.query.filter_by(calisma_durumu='bosta').order_by(Ekipman.kod).all()
     bosta_choices = [
         (e.id, f"{e.kod} ({e.tipi} / {e.calisma_yuksekligi or 0}m)") 
         for e in bosta_ekipmanlar
     ]
     bosta_id_seti = {e.id for e in bosta_ekipmanlar}
-
-    # 3b. 'Bosta' listesine bu formdaki mevcut seçili (kirada olan) ekipmanları ekle
     full_choices = list(bosta_choices) 
-    for kalem in kiralama.kalemler:
-        if kalem.ekipman_id not in bosta_id_seti:
-            e = kalem.ekipman 
-            if e:
-                label = f"{e.kod} ({e.tipi} / {e.calisma_yuksekligi or 0}m) (MEVCUT SEÇİM)"
-                full_choices.append((e.id, label))
+    
+    # --- YENİ KİLİTLEME MANTIĞI (ID kullanarak, 'AttributeError' Düzeltmesi) ---
+    
+    db_kalemler_map = {k.id: k for k in kiralama.kalemler}
+
+    for kalem_form in form.kalemler:
+        db_kalem = None
+        
+        # --- DÜZELTME: 'kalem_form.id.data' yerine 'kalem_form['id'].data' ---
+        # 'kalem_form.id' (dot) HTML id string'ini,
+        # 'kalem_form['id']' (dict) ise 'HiddenField' objesini verir.
+        kalem_id_str = str(kalem_form['id'].data or '')
+        # --- DÜZELTME SONU ---
+        
+        if kalem_id_str.isdigit():
+            db_kalem = db_kalemler_map.get(int(kalem_id_str))
+
+        if db_kalem:
+            # --- Bu MEVCUT BİR VERİTABANI KAYDI ---
+            if db_kalem.ekipman_id not in bosta_id_seti:
+                e = db_kalem.ekipman 
+                if e:
+                    label = f"{e.kod} ({e.tipi} / {e.calisma_yuksekligi or 0}m) (MEVCUT SEÇİM)"
+                    full_choices.append((e.id, label))
+            
+            if db_kalem.sonlandirildi:
+                kalem_form.kiralama_bitis.validators = [Optional()]
+                kalem_form.ekipman_id.validators = [Optional()]
+        else:
+            # --- Bu YENİ (JS ile eklenmiş) BİR SATIR ---
+            pass 
+    # --- Yeni Mantık Sonu ---
 
     full_choices.insert(0, ('', '--- Ekipman Seçiniz ---'))
-
-    # 3c. 'choices' listesini formdaki tüm kalemlere ata
     for kalem_form_field in form.kalemler:
         kalem_form_field.form.ekipman_id.choices = full_choices
-
-    # 3d. JS için JSON listesini hazırla
     bosta_choices_json = json.dumps(full_choices)
-    # --- DÜZELTME 3 SONU ---
 
 
-    # --- DÜZELTME (GET ISTEGI - VERI DÖNÜŞTÜRME) ---
-    # Form yüklenirken (GET) veritabanındaki 'String' verileri 
-    # form alanlarının beklediği 'Date' ve 'Decimal' objelerine çeviriyoruz.
-    if request.method == 'GET':
-        for kalem_form in form.kalemler:
+    # --- DÜZELTME (AttributeError ÇÖZÜMÜ) ---
+    for kalem_form in form.kalemler:
+        # --- DÜZELTME: 'kalem_form.id.data' yerine 'kalem_form['id'].data' ---
+        kalem_id_str = str(kalem_form['id'].data or '')
+        
+        if kalem_id_str.isdigit() and int(kalem_id_str) in db_kalemler_map:
             try:
                 # 1. TARİH ALANLARI
                 data_str = kalem_form.kiralama_baslangıcı.data
                 if isinstance(data_str, str) and data_str:
                     kalem_form.kiralama_baslangıcı.data = datetime.strptime(data_str, '%Y-%m-%d').date()
-                else:
+                elif not isinstance(data_str, date): 
                     kalem_form.kiralama_baslangıcı.data = None
 
                 data_str = kalem_form.kiralama_bitis.data
                 if isinstance(data_str, str) and data_str:
                     kalem_form.kiralama_bitis.data = datetime.strptime(data_str, '%Y-%m-%d').date()
-                else:
+                elif not isinstance(data_str, date):
                     kalem_form.kiralama_bitis.data = None
 
                 # 2. FİYAT ALANLARI
                 data_str = kalem_form.kiralama_brm_fiyat.data
                 if isinstance(data_str, str) and data_str:
                     kalem_form.kiralama_brm_fiyat.data = Decimal(data_str)
-                else:
-                    kalem_form.kiralama_brm_fiyat.data = None
+                elif not isinstance(data_str, Decimal):
+                     kalem_form.kiralama_brm_fiyat.data = None
 
                 data_str = kalem_form.nakliye_fiyat.data
                 if isinstance(data_str, str) and data_str:
                     kalem_form.nakliye_fiyat.data = Decimal(data_str)
-                else:
+                elif not isinstance(data_str, Decimal):
                     kalem_form.nakliye_fiyat.data = None
             
             except Exception as e:
-                print(f"Düzeltme formu GET veri dönüştürme hatası: {e}")
+                print(f"Düzeltme formu VERİ DÖNÜŞTÜRME hatası: {e}")
                 kalem_form.kiralama_baslangıcı.data = None
                 kalem_form.kiralama_bitis.data = None
                 kalem_form.kiralama_brm_fiyat.data = None
                 kalem_form.nakliye_fiyat.data = None
-    # --- GET VERİ DÖNÜŞTÜRME KODU SONU ---
+    # --- VERİ DÖNÜŞTÜRME KODU SONU ---
 
 
     # --- POST ISTEGI (Formu kaydetme) ---
-    # 'choices' listeleri ve 'validators' Düzeltme 1, 2, 3 sayesinde 
-    # artık 'validate_on_submit' için hazır.
+    # (Bu blok 'form.kalemler.data' listesini [dict] kullandığı için
+    # 'kalem_data.get('id')' mantığı zaten DOĞRUYDU. Değişiklik gerekmiyor.)
     if form.validate_on_submit():
         
-        original_ekipman_ids = {kalem.ekipman_id for kalem in kiralama.kalemler if kalem.ekipman_id}
+        original_ekipman_ids = {k.ekipman_id for k in db_kalemler_map.values() if k.ekipman_id}
 
         try:
-            # Not: kiralama.musteri_id'yi GÜNCELLEMİYORUZ ('disabled' yaptık).
-            
             new_ekipman_ids = set()
             new_kalemler_data = [] 
-            
-            for kalem_data in form.kalemler.data:
+            sonlandirilmis_kalemler_map = {} 
+
+            for kalem_data in form.kalemler.data: 
+                
+                db_kalem = None
+                kalem_id_str = str(kalem_data.get('id') or '')
+                
+                if kalem_id_str.isdigit():
+                    db_kalem = db_kalemler_map.get(int(kalem_id_str))
+                
+                if db_kalem and db_kalem.sonlandirildi:
+                    new_ekipman_ids.add(db_kalem.ekipman_id)
+                    sonlandirilmis_kalemler_map[db_kalem.id] = db_kalem
+                    continue 
+                
                 try:
                     ekipman_id = int(kalem_data['ekipman_id'])
                     if ekipman_id:
                         new_ekipman_ids.add(ekipman_id)
-                        new_kalemler_data.append(kalem_data)
+                        new_kalemler_data.append(kalem_data) 
                 except (ValueError, TypeError):
                     continue 
             
@@ -318,8 +357,14 @@ def duzenle(kiralama_id):
             
             for kalem_data in new_kalemler_data:
                 
-                baslangic_str = kalem_data['kiralama_baslangıcı'].strftime("%Y-%m-%d") if kalem_data['kiralama_baslangıcı'] else None
-                bitis_str = kalem_data['kiralama_bitis'].strftime("%Y-%m-%d") if kalem_data['kiralama_bitis'] else None
+                baslangic = kalem_data['kiralama_baslangıcı']
+                bitis = kalem_data['kiralama_bitis']
+
+                if baslangic and bitis and bitis < baslangic:
+                    raise ValueError(f"Hata: Bitiş Tarihi ({bitis.strftime('%d.%m.%Y')}), Başlangıç Tarihinden ({baslangic.strftime('%d.%m.%Y')}) önce olamaz.")
+
+                baslangic_str = baslangic.strftime("%Y-%m-%d") if baslangic else None
+                bitis_str = bitis.strftime("%Y-%m-%d") if bitis else None
                 brm_fiyat_str = str(kalem_data['kiralama_brm_fiyat'] or 0)
                 nakliye_fiyat_str = str(kalem_data['nakliye_fiyat'] or 0)
                 
@@ -328,9 +373,21 @@ def duzenle(kiralama_id):
                     kiralama_baslangıcı=baslangic_str,
                     kiralama_bitis=bitis_str,
                     kiralama_brm_fiyat=brm_fiyat_str,
-                    nakliye_fiyat=nakliye_fiyat_str
+                    nakliye_fiyat=nakliye_fiyat_str,
+                    sonlandirildi=False 
                 )
                 kiralama.kalemler.append(yeni_kalem)
+            
+            for db_kalem in sonlandirilmis_kalemler_map.values():
+                kilitli_kalem = KiralamaKalemi(
+                    ekipman_id=db_kalem.ekipman_id,
+                    kiralama_baslangıcı=db_kalem.kiralama_baslangıcı,
+                    kiralama_bitis=db_kalem.kiralama_bitis,
+                    kiralama_brm_fiyat=db_kalem.kiralama_brm_fiyat,
+                    nakliye_fiyat=db_kalem.nakliye_fiyat,
+                    sonlandirildi=True 
+                )
+                kiralama.kalemler.append(kilitli_kalem)
 
             db.session.commit()
             flash('Kiralama kaydı başarıyla güncellendi.', 'success')
@@ -338,15 +395,16 @@ def duzenle(kiralama_id):
 
         except Exception as e:
             db.session.rollback()
-            flash(f"Güncelleme sırasında bir veritabanı hatası oluştu: {str(e)}", "danger")
+            if isinstance(e, ValueError):
+                flash(str(e), "danger") 
+            else:
+                flash(f"Güncelleme sırasında bir veritabanı hatası oluştu: {str(e)}", "danger")
             traceback.print_exc()
 
     elif request.method == 'POST' and form.errors:
         flash("Formda hatalar var. Lütfen kontrol ediniz.", "danger")
-        # Hataların detayını terminalde görmek için:
         print("Form Validasyon Hataları:", form.errors) 
         
-    # --- GET ISTEGI (veya POST'ta hata varsa) ---
     return render_template(
         'kiralama/duzelt.html', 
         form=form, 
@@ -366,7 +424,7 @@ def sil(kiralama_id):
     
     try:
         for kalem in kiralama.kalemler:
-            if kalem.ekipman:
+            if kalem.ekipman and not kalem.sonlandirildi:
                 kalem.ekipman.calisma_durumu = 'bosta'
         
         db.session.delete(kiralama)

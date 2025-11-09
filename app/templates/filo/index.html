@@ -62,13 +62,24 @@
                 </td>
                 
                 <!-- İŞLEMLER HÜCRESİ -->
-                <td style="text-align: center;">
-                    <a href="{{ url_for('filo.duzelt', id=ekipman.id) }}" class="btn" style="margin-right: 5px;">Düzelt</a>
-                    <form method="POST" action="{{ url_for('filo.sil', id=ekipman.id) }}" style="display: inline;" onsubmit="return confirm('Bu ekipmanı silmek istediğinizden emin misiniz?');">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="btn-danger" style="background-color: #8B0000;">Sil</button>
-                    </form>
+                <td>
+                 {% if ekipman.aktif_kiralama_bilgisi and ekipman.aktif_kiralama_bilgisi.kiralama and ekipman.aktif_kiralama_bilgisi.kiralama.musteri %}
+                 <div style="display: flex; align-items: center; gap: 8px;">
+                    <strong style="color: #333;">
+                    {{ ekipman.aktif_kiralama_bilgisi.kiralama.musteri.firma_adi }}
+                    </strong>
+                    <span>|</span>
+                    <small>
+                    <a href="{{ url_for('kiralama.duzenle', kiralama_id=ekipman.aktif_kiralama_bilgisi.kiralama.id) }}" title="Kiralama kaydını aç">
+                    ({{ ekipman.aktif_kiralama_bilgisi.kiralama.kiralama_form_no }})
+                    </a>
+                    </small>
+                </div>
+                {% else %}
+                 <span class="text-danger">Kiralama Bilgisi Yok</span>
+                {% endif %}
                 </td>
+                
             </tr>
             {% else %}
             <tr>

@@ -59,33 +59,30 @@ class Musteri(db.Model):
 class KiralamaKalemi(db.Model):
     """
     YENİ MODEL (Association Object)
-    Bu model, 'Kiralama' ve 'Ekipman' arasındaki ilişkiyi temsil eder
-    VE bu ilişkiye özel (fiyat, tarih gibi) verileri tutar.
+    ...
     """
     __tablename__ = 'kiralama_kalemi'
     
     id = db.Column(db.Integer, primary_key=True)
     
     # --- Yabancı Anahtarlar (Foreign Keys) ---
-    
-    # Hangi ana 'Kiralama' formuna ait?
     kiralama_id = db.Column(db.Integer, db.ForeignKey('kiralama.id'), nullable=False)
-    
-    # Hangi 'Ekipman' bu satırda kiralanıyor?
     ekipman_id = db.Column(db.Integer, db.ForeignKey('ekipman.id'), nullable=False)
     
-    # --- Kaleme Özel Veriler (Kiralama modelinden buraya taşındı) ---
+    # --- Kaleme Özel Veriler ---
     kiralama_baslangıcı = db.Column(db.String(50), nullable=False)
     kiralama_bitis = db.Column(db.String(50), nullable=False)
     kiralama_brm_fiyat = db.Column(db.String(50), nullable=False)
     nakliye_fiyat = db.Column(db.String(50), nullable=False, default='0')
-    
+
+    # --- YENİ EKLENECEK SÜTUN ---
+    # Bu, kiralama kaleminin 'filo' sayfasından kalıcı olarak 
+    # sonlandırılıp sonlandırılmadığını belirler.
+    sonlandirildi = db.Column(db.Boolean, default=False, nullable=False)
+    # --- YENİ SÜTUN SONU ---
+
     # --- İlişki Tanımları (back_populates) ---
-    
-    # Bu kalemin ait olduğu ana formu 'kiralama' özelliğiyle çağırabilmemizi sağlar
     kiralama = db.relationship('Kiralama', back_populates='kalemler')
-    
-    # Bu kalemin hangi ekipmanı temsil ettiğini 'ekipman' özelliğiyle çağırabilmemizi sağlar
     ekipman = db.relationship('Ekipman', back_populates='kiralama_kalemleri')
 
     def __repr__(self):

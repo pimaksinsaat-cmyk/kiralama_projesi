@@ -152,7 +152,7 @@ def bilgi(id):
     
     return render_template('filo/bilgi.html', ekipman=ekipman, kalemler=kalemler)
 
-# --- 6. KİRALAMA SONLANDIRMA (DÜZELTİLDİ) ---
+# --- 6. KİRALAMA SONLANDIRMA (GÜNCELLENDİ) ---
 @filo_bp.route('/sonlandir', methods=['POST'])
 def sonlandir():
     try:
@@ -167,14 +167,16 @@ def sonlandir():
 
         if ekipman.calisma_durumu == 'kirada':
             
-            # DÜZELTME: 'Kiralama' yerine 'KiralamaKalemi'ni bul
+            # Ekipmana ait 'sonlandırılmamış' aktif kalemi bul
             aktif_kalem = KiralamaKalemi.query.filter_by(
-                ekipman_id=ekipman.id
+                ekipman_id=ekipman.id,
+                sonlandirildi=False  # Sadece henüz kapatılmamış olanı bul
             ).order_by(KiralamaKalemi.id.desc()).first()
             
             if aktif_kalem:
                 # Sunucu Tarafı Tarih Kontrolü
                 try:
+                    # kiralama_baslangıcı 'String' olduğu için strptime kullanıyoruz
                     baslangic_dt = datetime.strptime(aktif_kalem.kiralama_baslangıcı, "%Y-%m-%d").date()
                     bitis_dt = datetime.strptime(bitis_tarihi_str, "%Y-%m-%d").date()
                     
@@ -186,25 +188,31 @@ def sonlandir():
                     flash("Tarih formatı geçersiz.", 'danger')
                     return redirect(url_for('filo.index'))
 
-                # DÜZELTME: 'Kiralama' yerine 'KiralamaKalemi'nin bitiş tarihini güncelle
+                # --- ASIL İŞLEM BURADA ---
+                
+                # 1. Kiralama Bitiş Tarihini (String olarak) ayarla
                 aktif_kalem.kiralama_bitis = bitis_tarihi_str
                 
-                # Sadece şimdi ekipmanın durumunu 'bosta' yap
+                # 2. Ekipman durumunu 'bosta' yap
                 ekipman.calisma_durumu = 'bosta'
-                flash(f"{ekipman.kod} kodlu ekipman 'Boşa' alındı. Bitiş tarihi: {bitis_tarihi_str}", 'success')
+                
+                # 3. (EN ÖNEMLİSİ) Bu kalemi 'sonlandirildi' olarak işaretle.
+                #    Bu, 'duzenle' sayfasının bu kalemi kilitlemesini sağlayacak.
+                aktif_kalem.sonlandirildi = True 
+                
+                db.session.commit()
+                flash(f"{ekipman.kod} kodlu ekipman kiralaması başarıyla sonlandırıldı.", 'success')
             else:
-                # Veri tutarsızlığı: Ekipman 'kirada' görünüyor ama 'kalem' yok.
-                # Bu durumda en azından ekipmanı boşa alalım.
+                # Veri tutarsızlığı: 'kirada' ama 'sonlandırılmamış' kalem yok.
                 ekipman.calisma_durumu = 'bosta'
+                db.session.commit()
                 flash(f"{ekipman.kod} 'kirada' görünüyordu ama aktif kiralama kalemi bulunamadı! Ekipman 'boşa' alındı.", 'warning')
-            
-            db.session.commit()
-        
         else:
             flash(f"{ekipman.kod} kodlu ekipman zaten 'Boşta'.", 'info')
     
     except Exception as e:
         db.session.rollback()
         flash(f"Kiralama sonlandırılırken bir hata oluştu: {str(e)}", 'danger')
+        traceback.print_exc() # Hatayı terminale yazdır
         
     return redirect(url_for('filo.index'))

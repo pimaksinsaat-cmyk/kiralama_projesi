@@ -1,8 +1,8 @@
-"""Ekipman yükseklik ve kapasiteyi integer yaptı
+"""Veritabanini ilk olusturma
 
-Revision ID: c6704ec1bd80
+Revision ID: 67498d03d7fa
 Revises: 
-Create Date: 2025-10-31 11:04:52.267266
+Create Date: 2025-11-09 23:08:59.434646
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c6704ec1bd80'
+revision = '67498d03d7fa'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -60,6 +60,7 @@ def upgrade():
     sa.Column('kiralama_bitis', sa.String(length=50), nullable=False),
     sa.Column('kiralama_brm_fiyat', sa.String(length=50), nullable=False),
     sa.Column('nakliye_fiyat', sa.String(length=50), nullable=False),
+    sa.Column('sonlandirildi', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['ekipman_id'], ['ekipman.id'], ),
     sa.ForeignKeyConstraint(['kiralama_id'], ['kiralama.id'], ),
     sa.PrimaryKeyConstraint('id')
