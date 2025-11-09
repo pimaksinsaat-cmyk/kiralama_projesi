@@ -2,204 +2,248 @@
 
 {% block content %}
 <div class="container">
-    <!-- BAŞLIK DEĞİŞTİ -->
-    <h2>Kiralama Düzenle</h2>
+    <h1>Kiralama Kaydını Düzenle (No: {{ kiralama.kiralama_form_no }})</h1>
 
-    <!-- Flash mesajları -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
-          <div class="alert alert-{{ category }}">{{ message }}</div>
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
-    <form method="POST" novalidate>
+    <form method="POST" id="kiralama-form">
         {{ form.hidden_tag() }}
 
-        <div class="form-group">
-            <label>{{ form.kiralama_form_no.label }}</label>
-            <!-- 
-                Bu alan 'ekle' fonksiyonunda otomatik oluşturulduğu için readonly idi.
-                Düzenleme ekranında da 'readonly' kalması mantıklı.
-            -->
-            {{ form.kiralama_form_no(class="form-control", readonly=true) }}
+        <div class="card card-body mb-3">
+                <div class="form-row">
+                 <div class="form-group col-md-6"> <label for="musteri_adi_static">Müşteri (Değiştirilemez)</label>
+                    <input type="text" 
+                        id="musteri_adi_static" 
+                        class="form-control" 
+                        value="{{ kiralama.musteri.firma_adi if kiralama.musteri else 'Müşteri Yok' }}" 
+                        disabled>
+                    </div>
+                </div>
+                    
+            
         </div>
-
-        <div class="form-group">
-            <label>{{ form.musteri_id.label }}</label>
-            {{ form.musteri_id(class="form-control") }}
-        </div>
-
-        <hr>
         
-        <h4>Ekipman Filtrele (Mevcut Ekipmanı Değiştirmek İçin)</h4>
-        <div class="form-row">
-            
-            <!-- Hizalama için col-md-3 ve manuel, kısa etiketler kullanıldı -->
-            
-            <div class="form-group col-md-3">
-                <label for="tipi_input">Tip</label>
-                {{ form.ekipman_tipi(class="form-control", id="tipi_input", list="tip-listesi", placeholder="Tüm Tipler") }}
-                <datalist id="tip-listesi">
-                    <option value="Manlift">
-                    <option value="Eklemli">
-                    <option value="Teleskopik sepet">
-                    <option value="Forklift">
-                </datalist>
-            </div>
-            
-            <div class="form-group col-md-3">
-                <label for="yakit_input">Yakıt</label>
-                {{ form.ekipman_yakit(class="form-control", id="yakit_input", list="yakit-listesi", placeholder="Tüm Yakıtlar") }}
-                <datalist id="yakit-listesi">
-                    <option value="Elektrikli">
-                    <option value="Dizel">
-                    <option value="Hybrid">
-                </datalist>
-            </div>
-            
-            <div class="form-group col-md-3">
-                <label for="min_yukseklik_input">Min. Yükseklik (m)</label>
-                {{ form.min_yukseklik(class="form-control", id="min_yukseklik_input") }}
-            </div>
-            
-            <div class="form-group col-md-3">
-                <label for="min_kapasite_input">Min. Kapasite (kg)</label>
-                {{ form.min_kapasite(class="form-control", id="min_kapasite_input") }}
-            </div>
-            
-        </div>
+        <hr>
+        <h4>Kiralama Kalemleri (Ekipmanlar)</h4>
 
-        <div class="form-group">
-            <label>{{ form.ekipman_id.label }}</label>
-            {{ form.ekipman_id(class="form-control", id="ekipman_select") }}
-        </div>
+        <div id="kalemler-listesi">
+            
+            {% for kalem_form in form.kalemler %}
+            <div class="kiralama-kalemi card card-body mb-2">
+                {{ kalem_form.hidden_tag() }}
+                
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>{{ kalem_form.ekipman_id.label }}</label>
+                        {{ kalem_form.ekipman_id(class="form-control ekipman-select") }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{{ kalem_form.kiralama_baslangıcı.label }}</label>
+                        {{ kalem_form.kiralama_baslangıcı(class="form-control") }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{{ kalem_form.kiralama_bitis.label }}</label>
+                        {{ kalem_form.kiralama_bitis(class="form-control") }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>{{ kalem_form.kiralama_brm_fiyat.label }}</label>
+                        {{ kalem_form.kiralama_brm_fiyat(class="form-control") }}
+                    </div>
+                     <div class="form-group col-md-4">
+                        <label>{{ kalem_form.nakliye_fiyat.label }}</label>
+                        {{ kalem_form.nakliye_fiyat(class="form-control") }}
+                    </div>
+                    <div class="form-group col-md-4 d-flex align-items-end justify-content-end">
+                        <button type="button" class="btn btn-danger2 btn-sm remove-kalem">Satırı Sil</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        
+        </div> <button type="button" id="add-kalem" class="btn btn-success mt-2">
+            <i class="fa fa-plus"></i> Ekipman Satırı Ekle
+        </button>
 
         <hr>
-
-        <div class="form-group">
-            <label>{{ form.kiralama_baslangıcı.label }}</label>
-            {{ form.kiralama_baslangıcı(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            <label>{{ form.kiralama_bitis.label }}</label>
-            {{ form.kiralama_bitis(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            <label>{{ form.kiralama_brm_fiyat.label }}</label>
-            {{ form.kiralama_brm_fiyat(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            <label>{{ form.nakliye_fiyat.label }}</label>
-            {{ form.nakliye_fiyat(class="form-control") }}
-        </div>
-
         <div class="btn-container mt-3">
-            <!-- BUTON METNİ DEĞİŞTİ -->
-            {{ form.submit(class="btn btn-primary", value="Güncelle") }}
-            <a href="{{ url_for('kiralama.index') }}" class="btn btn-secondary">İptal</a>
+            {{ form.submit(class="btn btn-primary btn-lg") }}
+            <a href="{{ url_for('kiralama.index') }}" class="btn btn-secondary btn-lg">İptal</a>
         </div>
     </form>
 </div>
+
 {% endblock %}
 
-<!-- SAYFANIN EN ALTINA JAVASCRIPT EKLİYORUZ (ekle.html ile aynı) -->
 {% block scripts %}
 {{ super() }}
 <script>
-  const MEVCUT_EKIPMAN_ID = {{ form.ekipman_id.data or 'null' }};
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. Gerekli elementleri seç
+    const kalemListesi = document.getElementById('kalemler-listesi');
+    const addKalemButton = document.getElementById('add-kalem');
+    
+    // 2. Python'dan gelen 'bosta' ekipmanların TAM listesi
+    // Bu ana listeye asla dokunmayacağız, sadece filtrelemek için okuyacağız.
+    const bostaChoices = {{ bosta_choices_json|safe }};
+
+    // 3. (YENİ) O an sayfada seçili olan tüm ID'leri bulan fonksiyon
+    // Bu, "bu ID'yi başka bir satırda gösterme" dememizi sağlar.
+    function getCurrentlySelectedIds() {
+        const selectedIds = new Set();
+        const allSelects = kalemListesi.querySelectorAll('.ekipman-select');
         
-        // 1. Elementleri seç
-        const tipiInput = document.getElementById('tipi_input');
-        const yakitInput = document.getElementById('yakit_input');
-        const yukseklikInput = document.getElementById('min_yukseklik_input');
-        const kapasiteInput = document.getElementById('min_kapasite_input');
-        const ekipmanSelect = document.getElementById('ekipman_select');
-
-        // 2. Bir "debounce" fonksiyonu tanımla
-        function debounce(func, delay) {
-            let timeoutId;
-            return function(...args) {
-                if (timeoutId) {
-                    clearTimeout(timeoutId);
-                }
-                timeoutId = setTimeout(() => {
-                    func.apply(this, args);
-                }, delay);
-            };
-        }
-
-        // 3. Ekipman listesini güncelleyen asıl fonksiyon
-        async function guncelleEkipmanListesi() {
-            const tipi = tipiInput.value || '';
-            const yakit = yakitInput.value || '';
-            const minYukseklik = yukseklikInput.value || 0;
-            const minKapasite = kapasiteInput.value || 0;
-
-            // YENİ: URL, 'include_id' parametresini içerecek şekilde güncellendi
-             let url = `{{ url_for('kiralama.get_ekipman') }}?tipi=${tipi}&yakit=${yakit}&min_yukseklik=${minYukseklik}&min_kapasite=${minKapasite}`;
-
-            // Eğer 'MEVCUT_EKIPMAN_ID' varsa (yani 'duzelt' sayfasındaysak), 
-            // 'ekle' sayfasında bu 'null' olacaktır.
-            if (MEVCUT_EKIPMAN_ID) {
-                url += `&include_id=${MEVCUT_EKIPMAN_ID}`;
+        allSelects.forEach(select => {
+            if (select.value) { // Boş olanları ('') sete ekleme
+                selectedIds.add(String(select.value));
             }
-            try {
-                const response = await fetch(url);
-                const ekipmanlar = await response.json();
+        });
+        return selectedIds;
+    }
 
-                // Dropdown'ı temizle
-                ekipmanSelect.innerHTML = ''; 
+    // 4. (YENİ) BİR select kutusunun seçeneklerini akıllıca güncelleyen fonksiyon
+    function updateSelectOptions(selectElement, globallySelectedIds) {
+        // Bu kutunun şu anki kendi değerini sakla
+        const currentValue = selectElement.value; 
+        
+        // Önce listeyi temizle
+        selectElement.innerHTML = ''; 
 
-                // Yeni seçenekleri ekle
-                if (ekipmanlar.length === 0) {
-                    ekipmanSelect.options.add(new Option('Uygun ekipman bulunamadı', ''));
-                } else {
-                    ekipmanSelect.options.add(new Option('--- Ekipman Seçiniz ---', ''));
-                    ekipmanlar.forEach(function(ekipman) {
-                        ekipmanSelect.options.add(new Option(ekipman.kod, ekipman.id));
-                    });
-                }
-            } catch (error) {
-                console.error('Ekipman listesi yüklenemedi:', error);
-                ekipmanSelect.innerHTML = '';
-                ekipmanSelect.options.add(new Option('Liste yüklenemedi!', ''));
+        // Ana 'bostaChoices' listesini dolaş
+        bostaChoices.forEach(choice => {
+            const choiceValue = String(choice[0]); //örn: '1'
+            const choiceText = choice[1];      //örn: 'ML-01 (Manlift)'
+
+            // Bir seçeneği listeye eklemek için 3 şart:
+            // 1. Seçenek boştur ('') (yani "--- Seçiniz ---" satırıdır)
+            // 2. Seçenek, bu kutunun *kendi* o anki seçimidir (değişmemesi için)
+            // 3. Seçenek, *başka hiçbir kutu* tarafından seçilmemiştir
+            
+            if (choiceValue === '' || 
+                choiceValue === currentValue || 
+                !globallySelectedIds.has(choiceValue)) 
+            {
+                const option = new Option(choiceText, choiceValue);
+                selectElement.add(option);
             }
+        });
+
+        // Kutunun kendi değerini (eğer varsa) geri yükle
+        selectElement.value = currentValue;
+    }
+
+    // 5. (YENİ) Tüm kutuları yenileyen ana fonksiyon
+    function refreshAllDropdowns() {
+        const globallySelectedIds = getCurrentlySelectedIds();
+        const allSelects = kalemListesi.querySelectorAll('.ekipman-select');
+        
+        allSelects.forEach(select => {
+            updateSelectOptions(select, globallySelectedIds);
+        });
+    }
+
+    // 6. "Satır Ekle" butonu (GÜNCELLENDİ)
+    addKalemButton.addEventListener('click', function() {
+        
+        const templateKalem = kalemListesi.querySelector('.kiralama-kalemi');
+        if (!templateKalem) {
+            console.error("Klonlama için şablon (ilk kalem satırı) bulunamadı!");
+            return;
         }
-
-        // 4. Güncelleme fonksiyonunun "debounce" edilmiş halini oluştur
-        const debouncedGuncelle = debounce(guncelleEkipmanListesi, 500);
         
-        // 5. Filtre inputlarına 'input' olayını ata
-        tipiInput.addEventListener('input', debouncedGuncelle);
-        yakitInput.addEventListener('input', debouncedGuncelle);
-        yukseklikInput.addEventListener('input', debouncedGuncelle);
-        kapasiteInput.addEventListener('input', debouncedGuncelle);
-
-        // 6. Tıklama davranışını iyileştir
-        function clearInputOnClick(event) {
-            event.target.value = '';
-            debouncedGuncelle();
-        }
+        const newKalem = templateKalem.cloneNode(true);
+        const newIndex = kalemListesi.getElementsByClassName('kiralama-kalemi').length;
         
-        tipiInput.addEventListener('click', clearInputOnClick);
-        yakitInput.addEventListener('click', clearInputOnClick);
-
-        // 7. Sayfa ilk yüklendiğinde listeyi doldur
+        newKalem.querySelectorAll('input, select, label').forEach(function(el) {
+            // name, id, ve label 'for' attribute'larını güncelle
+            if (el.name) {
+                el.name = el.name.replace(/kalemler-\d+-/, 'kalemler-' + newIndex + '-');
+            }
+            if (el.id) {
+                el.id = el.id.replace(/kalemler-\d+-/, 'kalemler-' + newIndex + '-');
+            }
+            if (el.tagName === 'LABEL' && el.htmlFor) {
+                 el.htmlFor = el.htmlFor.replace(/kalemler-\d+-/, 'kalemler-' + newIndex + '-');
+            }
+            
+            // Klonlanan satırın içini temizle (hidden olanlar hariç)
+            if (el.type !== 'hidden') {
+                el.value = ''; // Tüm inputları ve select'leri boşalt
+            }
+        });
         
-        // ÖNEMLİ: Düzenleme sayfasında, sayfa ilk yüklendiğinde listeyi
-        // doldurmak yerine, routes.py'den gelen seçili değeri göstermek daha
-        // iyi olabilir. Ancak 'ekle' ile tutarlılık için bu kodu bırakıyoruz.
-        // routes.py'deki 'duzelt' fonksiyonunun seçili ekipmanı 
-        // listeye (choices) eklemesi gerekecek.
-        guncelleEkipmanListesi();
+        // Yeni (boş) satırı listeye ekle
+        kalemListesi.appendChild(newKalem);
+        
+        // ŞİMDİ, yeni satır eklendiğine göre, TÜM listeleri yenile
+        refreshAllDropdowns();
     });
+
+    // 7. "Satır Sil" butonu (GÜNCELLENDİ)
+    kalemListesi.addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-kalem')) {
+            if (kalemListesi.getElementsByClassName('kiralama-kalemi').length > 1) {
+                
+                event.target.closest('.kiralama-kalemi').remove();
+                
+                guncelleKalemIndexleri(); // Bu fonksiyon (indexleri düzeltir) aynı kalmalı
+                
+                // Bir ekipman serbest kaldığı için, TÜM listeleri yenile
+                refreshAllDropdowns(); 
+
+            } else {
+                alert('En az bir kiralama satırı olmalıdır.');
+            }
+        }
+    });
+
+    // 8. (YENİ) Bir ekipman seçimi DEĞİŞTİĞİNDE tetiklen
+    kalemListesi.addEventListener('change', function(event) {
+        if (event.target.classList.contains('ekipman-select')) {
+            // Bir seçim değiştiğinde, diğer listeleri güncellemek için 
+            // TÜM listeleri yenile
+            refreshAllDropdowns();
+        }
+    });
+
+    // 9. (AYNI) Kalem Indexlerini Güncelleme Fonksiyonu
+    // Bu, aradan satır silindiğinde indexleri (0, 1, 2...) düzeltir
+    function guncelleKalemIndexleri() {
+        const tumKalemler = kalemListesi.getElementsByClassName('kiralama-kalemi');
+        for (let i = 0; i < tumKalemler.length; i++) {
+            const kalem = tumKalemler[i];
+            const newIndex = i;
+            kalem.querySelectorAll('input, select, label').forEach(function(el) {
+                if (el.name) {
+                    el.name = el.name.replace(/kalemler-\d+-/, 'kalemler-' + newIndex + '-');
+                }
+                if (el.id) {
+                    el.id = el.id.replace(/kalemler-\d+-/, 'kalemler-' + newIndex + '-');
+                }
+                if (el.tagName === 'LABEL' && el.htmlFor) {
+                    el.htmlFor = el.htmlFor.replace(/kalemler-\d+-/, 'kalemler-' + newIndex + '-');
+                }
+            });
+        }
+    }
+    
+    // 10. (YENİ) Sayfa ilk yüklendiğinde de listeleri bir kez yenile
+    // (Python'dan gelen ilk listenin de düzgün olmasını sağlar)
+    refreshAllDropdowns();
+
+});
 </script>
 {% endblock %}

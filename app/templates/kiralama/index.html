@@ -4,7 +4,7 @@
 <div class="container2">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Kiralama Kayıtları</h1>
-       
+        
         <div style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; margin-top: 20px;">
          <a href="{{ url_for('kiralama.ekle') }}" class="btn">Yeni Kiralama Ekle</a>
          <span>|</span>
@@ -39,7 +39,12 @@
             {% if kiralamalar %}
                 {% for kiralama in kiralamalar %}
                 <tr>
-                    <td>{{ kiralama.kiralama_form_no }}</td>
+                    
+                    <td>
+                        <a href="{{ url_for('kiralama.duzenle', kiralama_id=kiralama.id) }}">
+                            {{ kiralama.kiralama_form_no }}
+                        </a>
+                    </td>
                     <td>{{ kiralama.musteri.firma_adi if kiralama.musteri else 'Müşteri Yok' }}</td>
                     
                     <td>
@@ -70,9 +75,9 @@
                          method="POST" 
                          style="display: inline;"
                          onsubmit="return confirm('Bu kiralama kaydını (ve tüm kalemlerini) silmek istediğinize emin misiniz?');">
-        
+    
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
+    
                              <button type="submit" class="btn btn-danger2 btn-sm">
                               Sil
                              </button>

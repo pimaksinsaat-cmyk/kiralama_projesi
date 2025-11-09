@@ -7,7 +7,6 @@ kiralama_bp = Blueprint('kiralama', __name__, template_folder='templates')
 
 from . import index
 from . import ekle
-from . import duzelt
 from . import sil
 from . import bilgi
 from . import api

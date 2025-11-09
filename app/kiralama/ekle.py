@@ -1,44 +1,45 @@
+# --- 1. GEREKLİ TÜM IMPORTLAR ---
+import json
+import traceback
+from datetime import datetime, timezone, date
+from decimal import Decimal
+
+from flask import render_template, redirect, url_for, flash, jsonify, request
+from sqlalchemy import and_
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload 
+
+from app import db
 from app.kiralama import kiralama_bp
 from app.models import Kiralama, Ekipman, Musteri, KiralamaKalemi
-from app.forms import KiralamaForm, KiralamaKalemiForm
-from flask import render_template, redirect, url_for, flash, jsonify, request
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy import and_
-# YENİ IMPORT: 'index' rotasındaki sorguyu hızlandırmak için
-from sqlalchemy.orm import joinedload 
-from app import db
-from datetime import datetime, timezone
-from decimal import Decimal
-import traceback
-import json
+from app.forms import KiralamaForm, KiralamaKalemiForm 
 
-
-
+# --- 2. JINJA2 FİLTRESİ (Tarih Formatlama) ---
 @kiralama_bp.app_template_filter('tarihtr')
 def tarihtr(value):
+    """ Gelen tarih objesini veya string'i GG.AA.YYYY formatına çevirir. """
     if not value:
         return ""
+    if isinstance(value, (datetime, date)):
+         return value.strftime("%d.%m.%Y")
     if isinstance(value, str):
         try:
-            value = datetime.fromisoformat(value)
+            value_dt = datetime.strptime(value, '%Y-%m-%d').date()
+            return value_dt.strftime("%d.%m.%Y")
         except ValueError:
             return value
-    return value.strftime("%d.%m.%Y")
+    return value
 
-# --- 1. Kiralama Listeleme Sayfası (YENİ EKLENDİ) ---
-# 'Kaydet' butonuna bastıktan sonra buraya yönlendiriliyorsunuz.
+
+# --- 3. KİRALAMA LİSTELEME (ANA SAYFA) ---
 @kiralama_bp.route('/index')
-@kiralama_bp.route('/') # Blueprint'in ana sayfasını da burası yapalım
+@kiralama_bp.route('/') 
 def index():
-    """
-    Tüm kiralama kayıtlarını listeler.
-    """
+    """ Tüm kiralama kayıtlarını listeler. """
     try:
-        # Tüm Kiralama kayıtlarını (ana formları) veritabanından çek.
-        # 'joinedload' kullanmak, N+1 sorgu problemini çözer ve sayfayı hızlandırır.
         kiralamalar = Kiralama.query.options(
-            joinedload(Kiralama.musteri),       # Müşteri bilgilerini önceden çek
-            joinedload(Kiralama.kalemler).joinedload(KiralamaKalemi.ekipman) # Kalemleri ve kalemlerin ekipmanlarını çek
+            joinedload(Kiralama.musteri),       
+            joinedload(Kiralama.kalemler).joinedload(KiralamaKalemi.ekipman)
         ).order_by(Kiralama.id.desc()).all()
         
         return render_template('kiralama/index.html', kiralamalar=kiralamalar)
@@ -46,20 +47,17 @@ def index():
     except Exception as e:
         flash(f"Kiralamalar yüklenirken bir hata oluştu: {str(e)}", "danger")
         traceback.print_exc()
-        # Hata olsa bile sayfa yüklensin (boş listeyle)
         return render_template('kiralama/index.html', kiralamalar=[])
 
 
-# --- 2. Kiralama Ekleme Sayfası (MEVCUT KODUNUZ) ---
-    
+# --- 4. YENİ KİRALAMA EKLEME ---
 @kiralama_bp.route('/ekle', methods=['GET', 'POST'])
 def ekle():
+    """ Yeni kiralama kaydı oluşturur. """
     form = KiralamaForm()
     
-    # 1. Müşteri listesini her zaman doldur
     form.musteri_id.choices = [(m.id, m.firma_adi) for m in Musteri.query.all()]
     
-    # 2. 'Bosta' olan tüm ekipmanların listesi
     bosta_ekipmanlar = Ekipman.query.filter_by(calisma_durumu='bosta').order_by(Ekipman.kod).all()
     bosta_choices = [
         (e.id, f"{e.kod} ({e.tipi} / {e.calisma_yuksekligi or 0}m)") 
@@ -67,10 +65,7 @@ def ekle():
     ]
     bosta_choices.insert(0, ('', '--- Ekipman Seçiniz ---'))
 
-    # --- GET ISTEGI (Formu ilk kez gösterme) ---
     if request.method == 'GET':
-        
-        # --- BLOK 1: FORM NO (TRY...EXCEPT İÇİNDE) ---
         try:
             simdiki_yil = datetime.now(timezone.utc).year
             form_prefix = f'PF-{simdiki_yil}/'
@@ -86,29 +81,24 @@ def ekle():
                     son_numara_str = son_numara_parcalari[-1]
                     if son_numara_str: 
                         yeni_numara = int(son_numara_str) + 1
-                
+                        
             form.kiralama_form_no.data = f'{form_prefix}{yeni_numara}'
         except Exception as e:
-            flash(f"Form numarası oluşturulurken hata (kod 1): {e}", "warning")
+            flash(f"Form numarası oluşturulurken hata: {e}", "warning")
             simdiki_yil = datetime.now(timezone.utc).year
             form.kiralama_form_no.data = f'PF-{simdiki_yil}/1'
         
-        # --- BLOK 2: CHOICES ATAMASI (TRY...EXCEPT DIŞINDA) ---
         try:
             if form.kalemler:
                 form.kalemler[0].form.ekipman_id.choices = bosta_choices
         except Exception as e:
-            flash(f"Choices atanırken hata (kod 2): {e}", "danger")
+            flash(f"Choices atanırken hata: {e}", "danger")
 
-    # --- POST ISTEGI (Formu doğrulama/kaydetme) ---
-    
-    # POST ise (validasyon hatası olsa bile) tüm kalemlerin listesini doldur
     if request.method == 'POST':
         for kalem_form_field in form.kalemler:
             kalem_form_field.form.ekipman_id.choices = bosta_choices
 
     if form.validate_on_submit():
-        # 1. Ana Kiralama formunu oluştur
         yeni_kiralama = Kiralama(
             kiralama_form_no=form.kiralama_form_no.data,
             musteri_id=form.musteri_id.data
@@ -116,37 +106,37 @@ def ekle():
         db.session.add(yeni_kiralama) 
 
         try:
-            # 2. Formdan gelen 'kalemler' listesini dolaş
             secilen_ekipman_idler = set()
             
             for kalem_data in form.kalemler.data:
-                # coerce=int'i kaldırdığımız için, ID'yi manuel olarak alalım
                 try:
                     ekipman_id = int(kalem_data['ekipman_id'])
                 except (ValueError, TypeError):
-                    continue # Boş ('') veya geçersiz ID'leri atla
+                    continue 
                 
                 if not ekipman_id:
                     continue 
                     
                 if ekipman_id in secilen_ekipman_idler:
-                    flash(f"Bir ekipmanı (ID: {ekipman_id}) aynı formda birden fazla seçemezsiniz. İşlem iptal edildi.", "danger")
+                    flash(f"Ekipmanı (ID: {ekipman_id}) aynı formda birden fazla seçemezsiniz. İşlem iptal.", "danger")
                     db.session.rollback()
                     return redirect(url_for('kiralama.ekle'))
                 
                 secilen_ekipman = Ekipman.query.get(ekipman_id)
                 if not secilen_ekipman or secilen_ekipman.calisma_durumu != 'bosta':
-                    flash(f"Seçilen ekipman (ID: {ekipman_id}) kiralanamaz veya bulunamadı. İşlem iptal edildi.", "danger")
+                    flash(f"Ekipman (ID: {ekipman_id}) kiralanamaz veya bulunamadı. İşlem iptal.", "danger")
                     db.session.rollback()
                     return redirect(url_for('kiralama.ekle'))
                 
-                # 3. Yeni KiralamaKalemi nesnesini oluştur
+                baslangic_str = kalem_data['kiralama_baslangıcı'].strftime("%Y-%m-%d") if kalem_data['kiralama_baslangıcı'] else None
+                bitis_str = kalem_data['kiralama_bitis'].strftime("%Y-%m-%d") if kalem_data['kiralama_bitis'] else None
+                
                 yeni_kalem = KiralamaKalemi(
                     kiralama=yeni_kiralama,
                     ekipman=secilen_ekipman,
-                    kiralama_baslangıcı=kalem_data['kiralama_baslangıcı'].strftime("%Y-%m-%d"),
-                    kiralama_bitis=kalem_data['kiralama_bitis'].strftime("%Y-%m-%d"),
-                    kiralama_brm_fiyat=str(kalem_data['kiralama_brm_fiyat']),
+                    kiralama_baslangıcı=baslangic_str,
+                    kiralama_bitis=bitis_str,
+                    kiralama_brm_fiyat=str(kalem_data['kiralama_brm_fiyat'] or 0),
                     nakliye_fiyat=str(kalem_data['nakliye_fiyat'] or 0)
                 )
                 
@@ -160,7 +150,6 @@ def ekle():
             else:
                 db.session.commit()
                 flash(f"{len(secilen_ekipman_idler)} kalem başarıyla kiralandı!", "success")
-                # BAŞARILI KAYIT SONRASI LİSTELEME SAYFASINA YÖNLENDİR
                 return redirect(url_for('kiralama.index')) 
 
         except Exception as e:
@@ -169,25 +158,19 @@ def ekle():
             traceback.print_exc()
 
     else:
-        # Form validasyonu BAŞARISIZ olduysa
-        if form.errors:
+        if request.method == 'POST' and form.errors:
+            flash("Formda hatalar var, lütfen kontrol edin.", "warning")
             for field, errors in form.errors.items():
                 if field == 'kalemler':
                     for i, kalem_errors in enumerate(errors):
                         if kalem_errors:
                             for sub_field, sub_errors in kalem_errors.items():
                                 flash(f"Satır {i+1} - {sub_field}: {', '.join(sub_errors)}", "danger")
-                else:
-                    flash(f"Form hatası - {field}: {', '.join(errors)}", "danger")
+                # else:
+                #     flash(f"Form hatası - {field}: {', '.join(errors)}", "danger")
 
-    # Validasyon hatası durumunda (veya GET isteğinde) 
-    # 'choices' listesini (her ihtimale karşı) TEKRAR doldur
-    for kalem_form_field in form.kalemler:
-        kalem_form_field.form.ekipman_id.choices = bosta_choices
-    
     bosta_choices_json = json.dumps(bosta_choices)
 
-    # GET isteği veya Validasyon HATASI durumunda 'ekle.html'yi render et
     return render_template(
         'kiralama/ekle.html', 
         form=form, 
@@ -195,15 +178,218 @@ def ekle():
     )
 
 
-# --- 3. Ekipman Filtreleme API (MEVCUT KODUNUZ) ---
-# (Güncelleme sayfası için saklıyoruz)
+# --- 5. KİRALAMA KAYDI DÜZENLEME ---
+@kiralama_bp.route('/duzenle/<int:kiralama_id>', methods=['GET', 'POST'])
+def duzenle(kiralama_id):
+    """ Mevcut bir kiralama kaydını (ana form ve kalemleri) düzenler. """
+    
+    kiralama = Kiralama.query.options(
+        joinedload(Kiralama.kalemler)
+    ).get_or_404(kiralama_id)
 
+    form = KiralamaForm(obj=kiralama)
+
+    # --- DÜZELTME 1: "Choices cannot be None" HATASI İÇİN ---
+    # 'musteri_id' SelectField'inin 'choices' listesi 'POST' isteğinde de dolu olmalı.
+    form.musteri_id.choices = [(m.id, m.firma_adi) for m in Musteri.query.all()]
+
+    # --- DÜZELTME 2: "Formda Hatalar Var (Müşteri)" HATASI İÇİN ---
+    # 'musteri_id' alanı 'disabled' olduğu için forma gönderilmiyor.
+    # 'DataRequired' doğrulamasını geçmesi için bu alandaki doğrulamaları kaldırıyoruz.
+    form.musteri_id.validators = []
+
+    # --- DÜZELTME 3: "Formda Hatalar Var (Ekipman)" HATASI İÇİN ---
+    # 'ekipman_id' SelectField'lerinin 'choices' listesi 'POST' isteğinde de dolu olmalı.
+    # Bu blok 'validate_on_submit'ten ÖNCE çalışmalı.
+    
+    # 3a. 'Bosta' olan tüm ekipmanları al
+    bosta_ekipmanlar = Ekipman.query.filter_by(calisma_durumu='bosta').order_by(Ekipman.kod).all()
+    bosta_choices = [
+        (e.id, f"{e.kod} ({e.tipi} / {e.calisma_yuksekligi or 0}m)") 
+        for e in bosta_ekipmanlar
+    ]
+    bosta_id_seti = {e.id for e in bosta_ekipmanlar}
+
+    # 3b. 'Bosta' listesine bu formdaki mevcut seçili (kirada olan) ekipmanları ekle
+    full_choices = list(bosta_choices) 
+    for kalem in kiralama.kalemler:
+        if kalem.ekipman_id not in bosta_id_seti:
+            e = kalem.ekipman 
+            if e:
+                label = f"{e.kod} ({e.tipi} / {e.calisma_yuksekligi or 0}m) (MEVCUT SEÇİM)"
+                full_choices.append((e.id, label))
+
+    full_choices.insert(0, ('', '--- Ekipman Seçiniz ---'))
+
+    # 3c. 'choices' listesini formdaki tüm kalemlere ata
+    for kalem_form_field in form.kalemler:
+        kalem_form_field.form.ekipman_id.choices = full_choices
+
+    # 3d. JS için JSON listesini hazırla
+    bosta_choices_json = json.dumps(full_choices)
+    # --- DÜZELTME 3 SONU ---
+
+
+    # --- DÜZELTME (GET ISTEGI - VERI DÖNÜŞTÜRME) ---
+    # Form yüklenirken (GET) veritabanındaki 'String' verileri 
+    # form alanlarının beklediği 'Date' ve 'Decimal' objelerine çeviriyoruz.
+    if request.method == 'GET':
+        for kalem_form in form.kalemler:
+            try:
+                # 1. TARİH ALANLARI
+                data_str = kalem_form.kiralama_baslangıcı.data
+                if isinstance(data_str, str) and data_str:
+                    kalem_form.kiralama_baslangıcı.data = datetime.strptime(data_str, '%Y-%m-%d').date()
+                else:
+                    kalem_form.kiralama_baslangıcı.data = None
+
+                data_str = kalem_form.kiralama_bitis.data
+                if isinstance(data_str, str) and data_str:
+                    kalem_form.kiralama_bitis.data = datetime.strptime(data_str, '%Y-%m-%d').date()
+                else:
+                    kalem_form.kiralama_bitis.data = None
+
+                # 2. FİYAT ALANLARI
+                data_str = kalem_form.kiralama_brm_fiyat.data
+                if isinstance(data_str, str) and data_str:
+                    kalem_form.kiralama_brm_fiyat.data = Decimal(data_str)
+                else:
+                    kalem_form.kiralama_brm_fiyat.data = None
+
+                data_str = kalem_form.nakliye_fiyat.data
+                if isinstance(data_str, str) and data_str:
+                    kalem_form.nakliye_fiyat.data = Decimal(data_str)
+                else:
+                    kalem_form.nakliye_fiyat.data = None
+            
+            except Exception as e:
+                print(f"Düzeltme formu GET veri dönüştürme hatası: {e}")
+                kalem_form.kiralama_baslangıcı.data = None
+                kalem_form.kiralama_bitis.data = None
+                kalem_form.kiralama_brm_fiyat.data = None
+                kalem_form.nakliye_fiyat.data = None
+    # --- GET VERİ DÖNÜŞTÜRME KODU SONU ---
+
+
+    # --- POST ISTEGI (Formu kaydetme) ---
+    # 'choices' listeleri ve 'validators' Düzeltme 1, 2, 3 sayesinde 
+    # artık 'validate_on_submit' için hazır.
+    if form.validate_on_submit():
+        
+        original_ekipman_ids = {kalem.ekipman_id for kalem in kiralama.kalemler if kalem.ekipman_id}
+
+        try:
+            # Not: kiralama.musteri_id'yi GÜNCELLEMİYORUZ ('disabled' yaptık).
+            
+            new_ekipman_ids = set()
+            new_kalemler_data = [] 
+            
+            for kalem_data in form.kalemler.data:
+                try:
+                    ekipman_id = int(kalem_data['ekipman_id'])
+                    if ekipman_id:
+                        new_ekipman_ids.add(ekipman_id)
+                        new_kalemler_data.append(kalem_data)
+                except (ValueError, TypeError):
+                    continue 
+            
+            ids_to_make_bosta = original_ekipman_ids - new_ekipman_ids
+            ids_to_make_kirada = new_ekipman_ids - original_ekipman_ids
+
+            if ids_to_make_bosta:
+                Ekipman.query.filter(Ekipman.id.in_(ids_to_make_bosta)).update(
+                    {'calisma_durumu': 'bosta'}, synchronize_session=False
+                )
+                
+            if ids_to_make_kirada:
+                yeni_kiralananlar = Ekipman.query.filter(
+                    Ekipman.id.in_(ids_to_make_kirada), 
+                    Ekipman.calisma_durumu == 'bosta'
+                ).all()
+                
+                if len(yeni_kiralananlar) != len(ids_to_make_kirada):
+                    raise Exception(f"Seçilen ekipmanlardan bazıları 'bosta' değil. İşlem iptal.")
+                
+                for ekip in yeni_kiralananlar:
+                    ekip.calisma_durumu = 'kirada'
+
+            kiralama.kalemler.clear() 
+            db.session.flush() 
+            
+            for kalem_data in new_kalemler_data:
+                
+                baslangic_str = kalem_data['kiralama_baslangıcı'].strftime("%Y-%m-%d") if kalem_data['kiralama_baslangıcı'] else None
+                bitis_str = kalem_data['kiralama_bitis'].strftime("%Y-%m-%d") if kalem_data['kiralama_bitis'] else None
+                brm_fiyat_str = str(kalem_data['kiralama_brm_fiyat'] or 0)
+                nakliye_fiyat_str = str(kalem_data['nakliye_fiyat'] or 0)
+                
+                yeni_kalem = KiralamaKalemi(
+                    ekipman_id=int(kalem_data['ekipman_id']),
+                    kiralama_baslangıcı=baslangic_str,
+                    kiralama_bitis=bitis_str,
+                    kiralama_brm_fiyat=brm_fiyat_str,
+                    nakliye_fiyat=nakliye_fiyat_str
+                )
+                kiralama.kalemler.append(yeni_kalem)
+
+            db.session.commit()
+            flash('Kiralama kaydı başarıyla güncellendi.', 'success')
+            return redirect(url_for('kiralama.index'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Güncelleme sırasında bir veritabanı hatası oluştu: {str(e)}", "danger")
+            traceback.print_exc()
+
+    elif request.method == 'POST' and form.errors:
+        flash("Formda hatalar var. Lütfen kontrol ediniz.", "danger")
+        # Hataların detayını terminalde görmek için:
+        print("Form Validasyon Hataları:", form.errors) 
+        
+    # --- GET ISTEGI (veya POST'ta hata varsa) ---
+    return render_template(
+        'kiralama/duzelt.html', 
+        form=form, 
+        kiralama=kiralama, 
+        bosta_choices_json=bosta_choices_json
+    )
+
+
+# --- 6. KİRALAMA KAYDI SİLME ---
+@kiralama_bp.route('/sil/<int:kiralama_id>', methods=['POST'])
+def sil(kiralama_id):
+    """
+    Ana kiralama kaydını ve ona bağlı tüm kalemleri siler.
+    İlişkili ekipmanların durumunu 'bosta' olarak günceller.
+    """
+    kiralama = Kiralama.query.get_or_404(kiralama_id)
+    
+    try:
+        for kalem in kiralama.kalemler:
+            if kalem.ekipman:
+                kalem.ekipman.calisma_durumu = 'bosta'
+        
+        db.session.delete(kiralama)
+        db.session.commit()
+        
+        flash('Kiralama kaydı ve bağlı kalemleri başarıyla silindi.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Kiralama silinirken bir hata oluştu: {str(e)}', 'danger')
+        traceback.print_exc() 
+
+    return redirect(url_for('kiralama.index'))
+
+
+# --- 7. EKİPMAN FİLTRELEME API (JS için) ---
 @kiralama_bp.route('/api/get-ekipman')
 def get_ekipman():
+    """ Ekipmanları filtrelemek için JSON verisi sağlar. """
     try:
         tipi = request.args.get('tipi', '', type=str)
         yakit = request.args.get('yakit', '', type=str)
-        min_yuksekl = request.args.get('min_yuksekl', 0, type=int) # Hata olmasın diye 'min_yukseklik' olmalı
+        min_yukseklik = request.args.get('min_yukseklik', 0, type=int) 
         min_kapasite = request.args.get('min_kapasite', 0, type=int)
         include_id = request.args.get('include_id', None, type=int)
 
@@ -219,9 +405,8 @@ def get_ekipman():
             query = query.filter(Ekipman.tipi.ilike(f"%{tipi}%"))
         if yakit:
             query = query.filter(Ekipman.yakit.ilike(f"%{yakit}%"))
-        # ÖNEMLİ: Parametre adını 'min_yukseklik' olarak düzelttim
-        if min_yuksekl > 0:
-            query = query.filter(Ekipman.calisma_yuksekligi >= min_yuksekl)
+        if min_yukseklik > 0:
+            query = query.filter(Ekipman.calisma_yuksekligi >= min_yukseklik)
         if min_kapasite > 0:
             query = query.filter(Ekipman.kaldirma_kapasitesi >= min_kapasite)
 
@@ -249,52 +434,3 @@ def get_ekipman():
         print(f"API Hatası (get_ekipman): {str(e)}")
         traceback.print_exc()
         return jsonify({"error": str(e), "details": "Sunucu tarafında bir hata oluştu."}), 500
-    # app/kiralama/routes.py (veya ekle.py) dosyanıza ekleyin
-
-# ... (diğer import'larınız) ...
-# 'traceback' import edilmemişse ekleyin:
-import traceback 
-
-# ... (index, ekle, get_ekipman fonksiyonlarınız) ...
-
-
-# --- 4. KİRALAMA KAYDI SİLME ROTASI (YENİ) ---
-@kiralama_bp.route('/sil/<int:kiralama_id>', methods=['POST'])
-def sil(kiralama_id):
-    """
-    Ana kiralama kaydını ve ona bağlı tüm kalemleri siler.
-    İlişkili ekipmanların durumunu 'bosta' olarak günceller.
-    """
-    
-    # Not: 'index.html' içinde CSRF token'ı <form> içine eklediğinizden
-    # emin olun, yoksa bu rota '400 Bad Request' hatası verir.
-    
-    # 1. Silinecek ana kiralama kaydını bul
-    kiralama = Kiralama.query.get_or_404(kiralama_id)
-    
-    try:
-        # 2. Adım: Bu kiralamaya bağlı TÜM ekipmanları bul
-        # ve durumlarını 'bosta' olarak güncelle.
-        for kalem in kiralama.kalemler:
-            if kalem.ekipman:
-                # Ekipmanın durumunu 'bosta' yap
-                kalem.ekipman.calisma_durumu = 'bosta'
-        
-        # 3. Adım: Ana kiralama kaydını sil.
-        # models.py'daki 'cascade="all, delete-orphan"' ayarı sayesinde,
-        # bu kiralama silindiğinde, ona bağlı TÜM KiralamaKalemi
-        # kayıtları da veritabanından otomatik olarak silinecektir.
-        db.session.delete(kiralama)
-        
-        # 4. Adım: Hem ekipman durumlarını hem de silme işlemini onayla.
-        db.session.commit()
-        
-        flash('Kiralama kaydı ve bağlı kalemleri başarıyla silindi.', 'success')
-        
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Kiralama silinirken bir hata oluştu: {str(e)}', 'danger')
-        traceback.print_exc() # Hatayı terminale yazdır
-
-    # İşlem başarılı da olsa, hatalı da olsa listeleme sayfasına dön
-    return redirect(url_for('kiralama.index'))

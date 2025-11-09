@@ -114,23 +114,35 @@
         flex-direction: column;
         flex: 1; /* her input eşit genişlikte olur */
     }
-table {
+    table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
     font-size: 0.9em;
-}
+    }
 
-th, td {
+    th, td {
     padding: 10px;
     border: 1px solid #dee2e6;
     text-align: left;
     vertical-align: middle;
-}
+    }
 
-th {
+    h {
     background-color: #e9ecef;
     color: #343a40;
-}
+    }
+    .logo {
+     /* --- Boyut Ayarı --- */
+    width: 250px;
+    height: auto;
 
+    /* --- Konum Ayarı (Ortalamak için) --- */
+    display: block;         /* Resimler normalde 'inline' elemandır, ortalamak için 'block' yaparız */
+    margin-left: auto;    /* Sol boşluğu otomatik ayarla */
+    margin-right: auto;   /* Sağ boşluğu otomatik ayarla */
+  
+    /* --- Konum Ayarı (Boşluklar) --- */
+     margin-bottom: 20px;  /* Logonun altına 20px boşluk ekler */
+    }
 
